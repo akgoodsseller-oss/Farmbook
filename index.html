@@ -1,0 +1,2618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>FarmBook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Figtree:wght@400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --white:#ffffff; --bg:#f7f8f5; --card:#ffffff; --ink:#23261f; --muted:#7b8074; --line:#e7eae1;
+  --green:#1f8a4c; --green-d:#166b3a; --green-l:#e8f5ec;
+  --orange:#f07d10; --orange-d:#d06a06; --orange-l:#fef0e0;
+  --red:#cf3b22; --red-l:#fce8e3; --blue:#2f6fb0; --plum:#9c3587;
+  --sh:0 1px 2px rgba(35,38,31,.05),0 6px 18px rgba(35,38,31,.06);
+  --sh2:0 10px 30px rgba(35,38,31,.14);
+  --r:16px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:Figtree,system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.app{max-width:460px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative}
+@media(min-width:540px){.app{margin:16px auto;min-height:calc(100vh - 32px);border-radius:26px;overflow:hidden;box-shadow:var(--sh2)}body{background:#e9ece4}}
+h1,h2,h3{margin:0;font-family:Fraunces,Georgia,serif;line-height:1.15}
+.n{font-family:Fraunces,Georgia,serif;font-variant-numeric:tabular-nums}
+
+/* header */
+header{position:sticky;top:0;z-index:20;background:var(--white);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:10px}
+.logo{width:34px;height:34px;border-radius:10px;background:var(--green-l);display:grid;place-items:center;font-size:17px;flex:none}
+header .t{flex:1;min-width:0}
+header .t b{font-family:Fraunces;font-size:17px;font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header .t span{font-size:11.5px;color:var(--muted)}
+.sync{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:20px;background:var(--bg);color:var(--muted);flex:none}
+.sync.on{background:var(--green-l);color:var(--green)}
+
+main{padding:14px 14px 96px}
+.pt{font-size:23px;font-weight:600;margin:2px 2px 2px}
+.ps{color:var(--muted);font-size:13px;margin:0 2px 14px}
+.eb{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:20px 2px 8px}
+
+/* hero */
+.hero{background:linear-gradient(145deg,var(--green),var(--green-d));color:#fff;border-radius:20px;padding:16px 18px;box-shadow:var(--sh2)}
+.hero .l{font-size:12.5px;opacity:.9;font-weight:600}
+.hero .v{font-size:36px;font-weight:600;margin-top:1px}
+.hero .sp{height:38px;margin:2px -4px 0}
+.hero .r{display:flex;gap:8px;margin-top:12px}
+.hero .r>div{flex:1;background:rgba(255,255,255,.16);border-radius:12px;padding:8px 10px}
+.hero .r b{font-family:Fraunces;font-size:17px;font-weight:600;display:block}
+.hero .r span{font-size:11px;opacity:.92}
+
+/* tiles */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--card);border-radius:var(--r);padding:13px;box-shadow:var(--sh);position:relative}
+.tile .ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;font-size:16px;margin-bottom:8px}
+.ic.g{background:var(--green-l);color:var(--green)} .ic.o{background:var(--orange-l);color:var(--orange-d)}
+.ic.r{background:var(--red-l);color:var(--red)} .ic.b{background:#e9f1f9;color:var(--blue)}
+.tile .v{font-family:Fraunces;font-size:21px;font-weight:600}
+.tile .l{font-size:12px;color:var(--muted);margin-top:1px}
+.tile .badge{position:absolute;top:11px;right:11px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--red-l);color:var(--red)}
+.tap{cursor:pointer}
+
+.card{background:var(--card);border-radius:var(--r);padding:15px;box-shadow:var(--sh);margin-bottom:12px}
+.card.pad0{padding:4px 15px}
+.card h3{font-size:15.5px;font-weight:600}
+.card .cs{font-size:12px;color:var(--muted);margin:2px 0 8px}
+.cb{position:relative;height:168px} .cb.s{height:146px}
+.cempty{height:100%;display:grid;place-items:center;text-align:center;color:var(--muted);font-size:13px;padding:12px}
+
+/* rows */
+.row{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.av{width:38px;height:38px;border-radius:10px;background:var(--bg);display:grid;place-items:center;font-size:17px;flex:none}
+.av.id{font-family:Figtree;font-size:10.5px;font-weight:700;color:var(--green);background:var(--green-l);letter-spacing:-.02em}
+.row .m{flex:1;min-width:0}
+.row .m b{font-size:14.5px;font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .m span{font-size:12px;color:var(--muted)}
+.row .e{text-align:right;flex:none}
+.row .e b{font-family:Fraunces;font-size:15px;font-weight:600;display:block}
+.pill{display:inline-block;font-size:10.5px;font-weight:700;padding:2.5px 8px;border-radius:20px;margin-top:2px}
+.pill.new{background:var(--orange-l);color:var(--orange-d)} .pill.ok{background:var(--green-l);color:var(--green)}
+.pill.late{background:var(--red-l);color:var(--red)} .pill.grey{background:var(--bg);color:var(--muted)}
+
+/* buttons */
+.b{border:0;border-radius:12px;padding:11px 15px;font-family:Figtree;font-weight:600;font-size:14px;cursor:pointer;background:var(--bg);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.b.o{background:var(--orange);color:#fff} .b.g{background:var(--green);color:#fff}
+.b.gh{background:transparent;border:1px solid var(--line)} .b.s{padding:8px 11px;font-size:12.5px}
+.b.w{width:100%} .b:active{transform:scale(.985)} .b.wa{background:#25d366;color:#08341a}
+.br{display:flex;gap:7px;flex-wrap:wrap}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px}
+.tabs button{white-space:nowrap;border:1px solid var(--line);background:var(--card);color:var(--muted);padding:7px 13px;border-radius:20px;font-weight:600;font-size:12.5px;font-family:Figtree;cursor:pointer}
+.tabs button.on{background:var(--green);border-color:var(--green);color:#fff}
+
+/* forms */
+label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:12px 0 5px}
+input,select,textarea{width:100%;font-family:Figtree;font-size:15px;padding:11px;border:1px solid var(--line);border-radius:11px;background:var(--white);color:var(--ink)}
+textarea{min-height:96px;resize:vertical;line-height:1.5}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--orange-l);border-color:var(--orange)}
+.two{display:flex;gap:8px}.two>*{flex:1}
+.chk{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink);font-weight:600;margin-top:12px}
+.chk input{width:auto}
+.hint{font-size:12px;color:var(--muted);margin-top:5px}
+.err{font-size:12px;color:var(--red);margin-top:5px;font-weight:600}
+input.bad,select.bad,textarea.bad{border-color:var(--red);background:var(--red-l)}
+.req{color:var(--red);font-weight:800}
+.warn{background:var(--red-l);border-radius:11px;padding:9px 11px;font-size:12.5px;color:var(--red);font-weight:600;margin-top:8px}
+.ib.over{border-color:var(--red);background:var(--red-l)}
+.stk{font-size:11.5px;font-weight:600;color:var(--muted);margin-top:5px}
+.stk.bad{color:var(--red)}
+
+/* empty */
+.empty{text-align:center;padding:30px 18px;color:var(--muted)}
+.empty .em{font-size:40px}.empty h3{color:var(--ink);margin:8px 0 4px;font-size:17px}
+.empty p{font-size:13.5px;max-width:250px;margin:0 auto 14px}
+
+/* nav + fab */
+.fab{position:fixed;bottom:76px;right:calc(50% - 230px + 16px);z-index:31;width:56px;height:56px;border-radius:18px;border:0;background:var(--orange);color:#fff;font-size:27px;box-shadow:var(--sh2);cursor:pointer;display:grid;place-items:center}
+@media(max-width:539px){.fab{right:16px}}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:30;max-width:460px;margin:0 auto;background:var(--white);border-top:1px solid var(--line);display:flex;padding:6px 2px 8px}
+@media(min-width:540px){nav{border-radius:0 0 26px 26px}}
+nav button{flex:1;border:0;background:none;color:var(--muted);font-family:Figtree;font-size:10.5px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer}
+nav svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--orange-d)}
+
+/* sheet modal */
+.mask{position:fixed;inset:0;background:rgba(25,28,20,.5);z-index:50;display:none;align-items:flex-end;justify-content:center}
+.mask.open{display:flex}
+@media(min-width:540px){.mask{align-items:center}}
+.sheet{background:var(--card);width:100%;max-width:460px;max-height:93vh;overflow:auto;border-radius:22px 22px 0 0;padding:16px 16px 24px;animation:up .22s ease}
+@media(min-width:540px){.sheet{border-radius:22px}}
+@keyframes up{from{transform:translateY(26px);opacity:.7}to{transform:none;opacity:1}}
+.sheet h2{font-size:19px;font-weight:600}
+.x{float:right;border:0;background:var(--bg);width:40px;height:40px;border-radius:50%;font-size:19px;color:var(--muted);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.x:active{background:var(--line)}
+.tot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);margin-top:12px;padding-top:11px}
+.tot .n{font-size:21px;font-weight:600}
+.il{display:grid;grid-template-columns:1fr 56px 66px 28px;gap:6px;align-items:center;margin-bottom:6px}
+.il .nm{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ib{border:1px solid var(--line);border-radius:12px;padding:9px 10px;margin-bottom:7px;background:var(--white)}
+.ib .t{display:grid;grid-template-columns:1fr 58px 28px;gap:6px;align-items:center}
+.ib .p{display:grid;grid-template-columns:1fr 84px;gap:6px;align-items:center;margin-top:6px}
+.ib .nm{font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ib .amt{font-size:14px;font-weight:600;text-align:right}
+.ib select,.ib input{font-size:12.5px;padding:8px 9px;border-radius:9px}
+.pr{display:grid;grid-template-columns:1fr 82px 28px;gap:6px;align-items:center;margin-bottom:6px}
+.pr input{padding:9px 10px;font-size:13.5px}
+.toast{position:fixed;bottom:98px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 16px;border-radius:12px;font-size:14px;font-weight:600;z-index:60;display:none;box-shadow:var(--sh2);max-width:88%}
+.toast.on{display:block}
+table.tb{width:100%;border-collapse:collapse;font-size:13px}
+table.tb th,table.tb td{border-bottom:1px solid var(--line);padding:7px 5px;text-align:left}
+table.tb td.r,table.tb th.r{text-align:right}
+.sx{overflow-x:auto}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:9px;font-size:12px;color:var(--muted)}
+.legend i{width:9px;height:9px;border-radius:3px;display:inline-block;margin-right:5px}
+.note{background:var(--orange-l);border-radius:11px;padding:10px 12px;font-size:12.5px;color:var(--ink)}
+.sync{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.sync.bad{background:var(--red-l);color:var(--red)}
+.sync.ok{background:var(--green-l);color:var(--green)}
+.ptr{position:fixed;top:0;left:50%;transform:translate(-50%,-46px);z-index:70;background:var(--green);color:#fff;
+  font-size:12.5px;font-weight:600;padding:7px 15px;border-radius:0 0 14px 14px;transition:transform .18s ease;pointer-events:none}
+.ptr.on{transform:translate(-50%,0)}
+.rf{display:flex;align-items:center;gap:9px;background:var(--white);border:1px solid var(--line);border-radius:13px;padding:10px 12px;margin-bottom:12px}
+.rf .t{flex:1;font-size:12.5px;color:var(--muted)}
+.rf .t b{color:var(--ink);font-size:13.5px;display:block}
+code.sn{display:block;background:#1e2119;color:#dfe6d8;padding:11px;border-radius:10px;font-size:11px;white-space:pre-wrap;word-break:break-all;max-height:190px;overflow:auto;font-family:ui-monospace,Menlo,monospace}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">🍊</div>
+    <div class="t"><b id="hName">FarmBook</b><span id="hDate"></span></div>
+    <div class="sync" id="hSync" onclick="syncNow(true)" title="Refresh from the Sheet">Offline</div>
+  </header>
+  <main id="main"></main>
+  <button class="fab" id="fab" title="New order">＋</button>
+  <nav id="nav">
+    <button class="on" data-v="home"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/></svg>Home</button>
+    <button data-v="orders"><svg viewBox="0 0 24 24"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 8.5h6M9 12h6M9 15.5h4"/></svg>Orders</button>
+    <button data-v="stock"><svg viewBox="0 0 24 24"><path d="M3.5 7.5 12 3.5l8.5 4v9L12 20.5 3.5 16.5z"/><path d="M3.5 7.5 12 11.5l8.5-4"/><path d="M12 11.5v9"/></svg>Stock</button>
+    <button data-v="money"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 9.5h18"/><path d="M16.5 14H18"/></svg>Money</button>
+    <button data-v="books"><svg viewBox="0 0 24 24"><path d="M12 6.6C10.4 5 8.4 4.5 4 4.5v13c4.4 0 6.4.5 8 2 1.6-1.5 3.6-2 8-2v-13c-4.4 0-6.4.5-8 2.1z"/><path d="M12 6.6v12.9"/></svg>Books</button>
+    <button data-v="setup"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M4.6 7.5l2.6 1.5M16.8 15l2.6 1.5M4.6 16.5l2.6-1.5M16.8 9l2.6-1.5"/></svg>Admin</button>
+  </nav>
+</div>
+<div class="mask" id="mask"><div class="sheet" id="sheetBox"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   SHARING SET-UP  —  the only part you ever need to edit by hand.
+
+   Do the Google Sheet set-up ONCE (Admin -> Set up my Google Sheet).
+   Then open this file in Notepad, paste your /exec link between the
+   quotes below, save, and send that ONE file to everybody. They just
+   open it — nothing to set up on their side.
+
+   There is only ever one file. Who did what is recorded by the
+   "Sold by" name picked on each order, not by the copy of the file.
+   ══════════════════════════════════════════════════════════════════ */
+const CONFIG = {
+  SHEET_URL : 'https://script.google.com/macros/s/AKfycbwFRzmH9aGH2qWKR5oxBLpMNhwyBmVfOlNGKZJNFQ50h80S3LaUfTVCGNs-FQFO1MWB/exec',                 // paste your .../exec link here
+  FARM_NAME : '',                 // e.g. 'Green Valley Organic Farm'
+  MOBILE    : '',                 // farm contact number
+  UPI       : '',                 // e.g. 'greenvalley@upi'
+  LEAD_DAYS : 2                   // days from order to delivery
+};
+
+/* ═══════════════ 1. DATA ═══════════════ */
+const KEY='farmbook_v1';
+const BLANK={farm:{name:'',upi:'',mobile:'',leadDays:2,shipFee:0,pin:''},sheetUrl:'',customers:[],sellers:[],products:[],
+  orders:[],payments:[],expenses:[],stockLogs:[],budgets:{},seq:{R:0,W:0,H:0,C:0,order:0,person:0},
+  tomb:{},farmU:0,farmV:{},syncedAt:0,since:0,clean:{},cleanFarmU:-1,cleanTomb:'{}',oneTrip:null,
+  tabsAt:0,tabsWaiting:false,everSynced:false,seeded:false,who:''};
+/* Produce and people you start with — edit or delete them any time in Setup. */
+const SEED_PRODUCTS=[
+  {id:'seed-mosambi',name:'Organic Mosambi',unit:'kg',cost:0,stock:0,low:20,fresh:true,
+   prices:[{label:'Retail',amt:60},{label:'Wholesale',amt:45}]},
+  {id:'seed-orange', name:'Organic Orange', unit:'kg',cost:0,stock:0,low:20,fresh:true,
+   prices:[{label:'Retail',amt:80},{label:'Wholesale',amt:60}]}];
+const SEED_SELLERS=[{id:'seed-suresh',code:'suresh-001',name:'Suresh'},
+                    {id:'seed-ramesh',code:'ramesh-002',name:'Ramesh'}];
+let S=load(), V='home', charts=[];
+function load(){
+  let d; try{ d=Object.assign({},BLANK,JSON.parse(localStorage.getItem(KEY))||{}); }catch(e){ d=Object.assign({},BLANK); }
+  d.farm=Object.assign({},BLANK.farm,d.farm||{});
+  d.stockLogs=d.stockLogs||[]; d.tomb=d.tomb||{}; d.farmU=+d.farmU||0; d.farmV=d.farmV||{};
+  d.since=+d.since||0; d.clean=d.clean||{}; d.cleanFarmU=(d.cleanFarmU==null?-1:+d.cleanFarmU);
+  d.cleanTomb=d.cleanTomb||'{}';
+  /* older copies had a single price per produce - turn it into a price list */
+  (d.products||[]).forEach(function(p){
+    if(!Array.isArray(p.prices)||!p.prices.length) p.prices=[{label:'Retail',amt:Number(p.rate)||0}];
+    p.rate=Number(p.prices[0].amt)||0;
+    if(p.low==null) p.low=10;
+  });
+  /* Anything filled in at the top of this file wins on a fresh copy,
+     so a shared file arrives already connected and already named. */
+  if(CONFIG.SHEET_URL && !d.sheetUrl) d.sheetUrl=CONFIG.SHEET_URL.trim();
+  if(CONFIG.FARM_NAME && !d.farm.name)   d.farm.name=CONFIG.FARM_NAME;
+  if(CONFIG.MOBILE    && !d.farm.mobile) d.farm.mobile=CONFIG.MOBILE;
+  if(CONFIG.UPI       && !d.farm.upi)    d.farm.upi=CONFIG.UPI;
+  if(CONFIG.LEAD_DAYS && !d.farm.leadDays) d.farm.leadDays=CONFIG.LEAD_DAYS;
+  return d;
+}
+/* Runs once at startup (after helpers exist), never again after that. */
+/* The starter produce and people are created identically on every phone -
+   same ids, and version 1, the lowest version there is.
+
+   They ARE sent to the Sheet, so the Sheet's tabs are complete and every
+   order can name who sold it. But because they sit at version 1 they lose
+   every contest: the moment the owner sets a real price or stock, that
+   wins, and a phone opening the app for the very first time can never
+   overwrite the real catalogue with its blank starter copy. */
+const SEED_U=1;
+function seedIfNew(){
+  if(S.seeded) return;
+  if((S.products||[]).length || (S.sellers||[]).length){ S.seeded=true; return; }
+  SEED_PRODUCTS.forEach(x=>{
+    const r=Object.assign({rate:x.prices[0].amt},JSON.parse(JSON.stringify(x)));
+    r.u=SEED_U; S.products.push(r); });
+  SEED_SELLERS.forEach((x,i)=>{ S.seq.person=i+1;
+    S.sellers.push({id:x.id,code:x.code,name:x.name,mobile:'',u:SEED_U}); });
+  S.seeded=true; try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
+}
+function save(){ stampChanges(); try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){} pushSheet(); }
+
+/* ═══════════════ 2. HELPERS ═══════════════ */
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+/* has this particular record reached the Sheet yet? */
+const asFile=()=>{ try{ return !/^https?:$/.test(location.protocol); }catch(e){ return false; } };
+const notSaved=r=>!!(S.sheetUrl && r && r.id && Number(r.u||0)!==Number((S.clean||{})[r.id]));
+const R=n=>Math.round((Number(n)||0)*100)/100;
+const money=n=>'₹'+Math.round(Number(n)||0).toLocaleString('en-IN');
+/* the local calendar date - NOT the UTC one. India is 5½ hours ahead, so
+   a UTC date filed anything before 5:30am under yesterday, and the whole
+   of the 1st before 5:30am under last month. */
+function ymd(d){ d=d||new Date();
+  const p=n=>(n<10?'0':'')+n;
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+const today=()=>ymd();
+const dAgo=d=>Math.round((Date.now()-new Date(d+'T00:00').getTime())/864e5);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pad=(n,w)=>String(n).padStart(w,'0');
+const $=id=>document.getElementById(id);
+const val=id=>($(id)?$(id).value:'').trim();
+const nval=id=>Number(val(id))||0;
+/* stops one tap being counted twice on a slow phone */
+let lastAct={k:'',t:0};
+function once(key){ const now=Date.now();
+  if(lastAct.k===key && now-lastAct.t<1800) return false;
+  lastAct={k:key,t:now}; return true; }
+function toast(m){const t=$('toast');t.textContent=m;t.className='toast on';clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast',2300);}
+function cvar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
+const EMO={mango:'🥭',tomato:'🍅',orange:'🍊',apple:'🍎',banana:'🍌',grape:'🍇',spinach:'🥬',potato:'🥔',
+  onion:'🧅',carrot:'🥕',lemon:'🍋',chilli:'🌶️',chili:'🌶️',corn:'🌽',coconut:'🥥',papaya:'🫐',guava:'🍐',
+  watermelon:'🍉',melon:'🍈',pineapple:'🍍',brinjal:'🍆',cabbage:'🥬',okra:'🌿',pomegranate:'🍎',cucumber:'🥒',peas:'🫛'};
+function emo(n){const s=(n||'').toLowerCase();for(const k in EMO)if(s.includes(k))return EMO[k];return '🧺';}
+const TYPES={R:'Retailer',W:'Wholesaler',H:'Household',C:'Corporate'};
+
+/* ═══════════════ 3. IDs ═══════════════ */
+/* Every produce carries a small price list (Retail / Wholesale / anything you
+   name). The order screen offers those prices in a dropdown, and picks the
+   right one on its own from the kind of customer. */
+const TYPE_PRICE={R:'Retail',W:'Wholesale',H:'Retail',C:'Wholesale'};
+function plist(p){ return (p&&Array.isArray(p.prices)&&p.prices.length)?p.prices:[{label:'Retail',amt:(p&&p.rate)||0}]; }
+function pickPrice(p,type){ const L=plist(p), want=TYPE_PRICE[type||'R']||'Retail';
+  let f=L.find(x=>String(x.label).toLowerCase()===want.toLowerCase()&&Number(x.amt)>0);
+  if(!f) f=L.find(x=>Number(x.amt)>0);
+  return f||L[0]; }
+function priceSummary(p){ return plist(p).map(x=>esc(x.label)+' '+money(x.amt)).join(' · '); }
+/* --- checks that stop half-filled orders and wrong mobile numbers --- */
+const digits=v=>String(v||'').replace(/\D/g,'');
+const badMobile=v=>{ const d=digits(v);
+  if(d.length===0) return 'Mobile number is needed';
+  if(d.length!==10) return 'A mobile number is exactly 10 digits — you have '+d.length;
+  if(!/^[6-9]/.test(d)) return 'An Indian mobile number starts with 6, 7, 8 or 9';
+  return ''; };
+const badPin=v=>{ const d=digits(v);
+  if(d.length===0) return 'Pincode is needed';
+  if(d.length!==6) return 'A pincode is exactly 6 digits';
+  return ''; };
+/* keeps a box to digits only, up to a length - used on every phone/pin box */
+function onlyNum(el,len){ el.value=digits(el.value).slice(0,len); }
+function showErrs(map){ /* {inputId: message} */
+  let first=null;
+  for(const id in map){
+    const el=$(id); if(!el) continue;
+    const bad=!!map[id];
+    el.classList.toggle('bad',bad);
+    let e=el.nextElementSibling;
+    if(!(e&&e.classList&&e.classList.contains('err'))){ e=document.createElement('div'); e.className='err'; el.parentNode.insertBefore(e,el.nextSibling); }
+    e.textContent=map[id]||''; e.style.display=map[id]?'block':'none';
+    if(bad&&!first) first=el;
+  }
+  if(first){ first.scrollIntoView({block:'center',behavior:'smooth'}); setTimeout(()=>{try{first.focus()}catch(e){}},250); }
+  return !first;
+}
+/* the person behind a row - always taken from a Sold by / Received by pick.
+   One shared file, so the picked name is the only record of who did it. */
+function byPicker(id,label){
+  if(!S.sellers.length) return `<div class="warn">Add at least one person in Admin → Order takers first.</div>`;
+  return `<label>${label} <span class="req">*</span></label>
+    <select id="${id}">${S.sellers.map(x=>`<option value="${x.id}">${esc(x.name)} · ${esc(x.code)}</option>`).join('')}</select>`;
+}
+function nameOf(id){ const x=S.sellers.find(y=>y.id===id); return x?x.name:''; }
+function codeOf(id){ const x=S.sellers.find(y=>y.id===id); return x?x.code:''; }
+function newCustCode(type){ S.seq[type]=(S.seq[type]||0)+1; return type+'-'+pad(S.seq[type],4); }
+function newSellerCode(name){
+  S.seq.person=Math.max((S.seq.person||0)+1, S.sellers.length+1);
+  const slug=(name||'seller').toLowerCase().replace(/[^a-z]/g,'').slice(0,12)||'seller';
+  return slug+'-'+pad(S.seq.person,3);
+}
+function newOrderCode(){ S.seq.order=(S.seq.order||0)+1; return 'ORD-'+pad(S.seq.order,4); }
+
+/* ═══════════════ 4. MONEY MATHS ═══════════════ */
+const oTotal=o=>R(o.items.reduce((s,i)=>s+i.qty*i.rate,0)+(+o.shipFee||0));
+/* the cost as it was ON THE DAY, so closed months never move */
+const oCost=o=>o.items.reduce((s,i)=>{
+  if(i.cost!==undefined && i.cost!==null) return s+i.qty*(+i.cost||0);
+  const p=S.products.find(x=>x.id===i.pid); return s+i.qty*(p?+p.cost||0:0); },0);
+const billed=c=>S.orders.filter(o=>o.custId===c&&o.status!=='Cancelled').reduce((s,o)=>s+oTotal(o),0);
+const paid=c=>S.payments.filter(p=>p.custId===c).reduce((s,p)=>s+p.amount,0);
+const dues=c=>R(billed(c)-paid(c));
+const totalDues=()=>R(S.customers.reduce((s,c)=>s+Math.max(0,dues(c.id)),0));
+/* Payments are applied to the oldest bill first, the way a shop ledger
+   works. The oldest bill still not covered is the one the customer is
+   actually late on. */
+function custOrders(c){ return S.orders.filter(o=>o.custId===c&&o.status!=='Cancelled')
+  .sort((a,b)=>a.date<b.date?-1:(a.date>b.date?1:(a.code<b.code?-1:1))); }
+function openBills(c){
+  let pot=paid(c); const out=[];
+  custOrders(c).forEach(o=>{ const t=oTotal(o);
+    if(pot>=t){ pot=R(pot-t); return; }
+    out.push({o:o,due:R(t-pot)}); pot=0; });
+  return out;
+}
+const oldestUnpaid=c=>{ const b=openBills(c); return b.length?b[0].o:null; };
+/* how much of THIS order is still owed, oldest-first */
+function orderDue(o){ const b=openBills(o.custId).find(x=>x.o.id===o.id); return b?b.due:0; }
+function lateDues(){return R(S.customers.reduce((s,c)=>{const d=dues(c.id);if(d<=0)return s;const o=oldestUnpaid(c.id);return s+((o&&dAgo(o.date)>7)?d:0);},0));}
+const cashIn=()=>R(S.payments.reduce((s,p)=>s+p.amount,0)-S.expenses.reduce((s,e)=>s+e.amount,0));
+const salesOn=d=>R(S.orders.filter(o=>o.date===d&&o.status!=='Cancelled').reduce((s,o)=>s+oTotal(o),0));
+const mKey=d=>(d||today()).slice(0,7);
+const inMonth=d=>mKey(d)===mKey();
+const salesMonth=()=>R(S.orders.filter(o=>inMonth(o.date)&&o.status!=='Cancelled').reduce((s,o)=>s+oTotal(o),0));
+const cogsMonth=()=>R(S.orders.filter(o=>inMonth(o.date)&&o.status!=='Cancelled').reduce((s,o)=>s+oCost(o),0));
+const expMonth=()=>R(S.expenses.filter(e=>inMonth(e.date)).reduce((s,e)=>s+e.amount,0));
+const profitMonth=()=>R(salesMonth()-cogsMonth()-expMonth());
+function stockLeft(pid){const p=S.products.find(x=>x.id===pid);if(!p)return 0;
+  const sold=S.orders.filter(o=>o.status!=='Cancelled').reduce((s,o)=>s+o.items.filter(i=>i.pid===pid).reduce((a,i)=>a+i.qty,0),0);
+  return R((p.stock||0)-sold);}
+const stockValue=()=>R(S.products.reduce((s,p)=>s+Math.max(0,stockLeft(p.id))*p.cost,0));
+/* A produce's story in three numbers:
+     in godown  = everything brought in, minus what has actually gone out
+     promised   = taken in orders that are not delivered yet
+     free       = what is genuinely still yours to sell                     */
+function qtyIn(pid,status){
+  return R(S.orders.filter(o=>status?o.status===status:o.status!=='Cancelled')
+    .reduce((a,o)=>a+o.items.filter(i=>i.pid===pid).reduce((b,i)=>b+i.qty,0),0)); }
+function stockBook(pid){
+  const p=S.products.find(x=>x.id===pid)||{};
+  const inn=R(p.stock||0), delivered=qtyIn(pid,'Delivered'), promised=qtyIn(pid,'Pending');
+  return { p:p, inn:inn, delivered:delivered, promised:promised,
+           godown:R(inn-delivered), free:R(inn-delivered-promised),
+           low:(p.low==null?10:p.low) }; }
+
+/* ═══════════════ 5. WHATSAPP PASTE PARSER ═══════════════ */
+const UNITS={kg:'kg',kgs:'kg',kilo:'kg',kilos:'kg',k:'kg',g:'gram',gm:'gram',gms:'gram',gram:'gram',grams:'gram',
+  dozen:'dozen',doz:'dozen',dz:'dozen',pc:'piece',pcs:'piece',piece:'piece',pieces:'piece',nos:'piece',no:'piece',
+  box:'box',boxes:'box',crate:'crate',crates:'crate',bundle:'bundle',bundles:'bundle',packet:'packet',pkt:'packet'};
+const NOISE=/\b(bhaiya|bhai|ji|sir|madam|please|pls|plz|kindly|need|want|send|bhejo|bhej|dena|do|de|chahiye|kar|karo|order|today|tomorrow|kal|aaj|morning|evening|urgent|fast|thanks|thank|you|ok|okay|hello|hi|namaste|good|and|aur|for|me|my|we|us|the|a|an|of)\b/gi;
+function parseWA(text){
+  const lines=String(text||'').split(/[\n,;•\-–]+/).map(s=>s.trim()).filter(Boolean);
+  const out=[];
+  lines.forEach(raw=>{
+    let s=raw.replace(/₹|rs\.?/gi,' ').replace(/\s+/g,' ').trim();
+    if(!s) return;
+    // Skip lines that are clearly not items: totals, addresses, phone numbers.
+    if(/(total|amount|grand|balance|advance|paid|pincode|pin code|address|mobile|phone|contact)/i.test(s)) return;
+    if(/\b[6-9]\d{9}\b/.test(s)) return;
+    // Find the quantity ANYWHERE in the line, with an optional unit right after it.
+    // Handles "5 kg mango", "mango 5 kg", and "Bhaiya 5 kg alphonso mango".
+    const m=s.match(/(\d+(?:[.,]\d+)?)\s*([a-zA-Z]+)?/);
+    if(!m) return;
+    const qty=parseFloat(m[1].replace(',','.'));
+    if(!(qty>0)) return;
+    if(m[1].replace(/\D/g,'').length>=5) return;   // 411001 / 9876543210 are not quantities
+    const w=(m[2]||'').toLowerCase();
+    const unit=UNITS[w]||null;
+    const cut=unit?m[0].length:m[1].length;      // eat the unit word only if it IS a unit
+    let name=(s.slice(0,m.index)+' '+s.slice(m.index+cut)).trim();
+    name=(name||'').replace(NOISE,' ').replace(/[^a-zA-Zऀ-ॿ ]/g,' ').replace(/\s+/g,' ').trim();
+    if(!name) return;
+    const p=matchProduct(name);
+    // Only treat it as an item if there was a real unit, or it matches produce we know.
+    // Stops stray text ("Pune 411001") from becoming an order line.
+    if(!p && !unit) return;
+    const pk=p?pickPrice(p,'R'):null;
+    out.push({raw:raw.trim(),qty,unit:unit||(p?p.unit:'kg'),name:p?p.name:titl(name),pid:p?p.id:'',
+      rate:pk?(Number(pk.amt)||0):0,plabel:pk?pk.label:'Typed',custom:!p,matched:!!p});
+  });
+  return out;
+}
+function titl(s){return s.replace(/\b\w/g,c=>c.toUpperCase());}
+function matchProduct(name){
+  const q=name.toLowerCase().trim(); if(!q) return null;
+  let best=null,bestScore=0;
+  S.products.forEach(p=>{
+    const hay=(p.name+' '+(p.aliases||'')).toLowerCase();
+    let sc=0;
+    if(hay===q) sc=100;
+    else if(hay.includes(q)||q.includes(p.name.toLowerCase())) sc=70+Math.min(20,q.length);
+    else { const w=q.split(' ').filter(x=>x.length>2); w.forEach(x=>{if(hay.includes(x))sc+=25;}); }
+    if(sc>bestScore){bestScore=sc;best=p;}
+  });
+  return bestScore>=25?best:null;
+}
+
+/* ═══════════════ 6. GOOGLE SHEET SYNC (optional) ═══════════════ */
+/* ══════════════════════════════════════════════════════════════
+   TWO-WAY SYNC
+
+   Every phone sends everything it has to the Sheet, and the Sheet
+   sends back one merged picture. The merging happens inside the
+   Sheet, so three phones can never drift apart.
+
+   Which change wins: each record carries the time it last changed,
+   and the newest change to THAT record wins. Two people editing two
+   different orders never clash. Deletions are remembered separately
+   so a deleted item cannot come back to life.
+
+   Sending uses a plain POST. Reading back uses a <script> tag
+   (JSONP), because that works even when the file is opened straight
+   off the phone with no web address.
+   ══════════════════════════════════════════════════════════════ */
+const SYNC_LISTS=['customers','sellers','products','orders','payments','expenses','stockLogs'];
+let SIG={}, syncing=false, lastSync=0, syncTimer=null, pending=0, lastErr='', syncState='', wantAgain=false;
+
+const sigOf=r=>JSON.stringify(r,(k,v)=>k==='u'?undefined:v);
+const FARM_KEYS=['name','mobile','upi','leadDays','shipFee','pin'];
+function initSig(){ SIG={};
+  SYNC_LISTS.forEach(k=>(S[k]||[]).forEach(r=>{ if(r&&r.id) SIG[r.id]=sigOf(r); }));
+  FARM_KEYS.forEach(k=>{ SIG['__f_'+k]=JSON.stringify(S.farm[k]===undefined?'':S.farm[k]); });
+  SIG.__budgets=JSON.stringify(S.budgets||{}); }
+
+/* stamps only what actually changed, so nothing steals a newer edit */
+function stampChanges(){ const now=Date.now();
+  SYNC_LISTS.forEach(k=>(S[k]||[]).forEach(r=>{ if(!r||!r.id) return;
+    const j=sigOf(r); if(SIG[r.id]!==j){ SIG[r.id]=j; r.u=now; } }));
+  /* one version per field, so two people changing two different settings
+     never overwrite each other */
+  FARM_KEYS.forEach(k=>{ const v=JSON.stringify(S.farm[k]===undefined?'':S.farm[k]);
+    if(SIG['__f_'+k]!==v){ SIG['__f_'+k]=v; S.farmV[k]=now; S.farmU=now; } });
+  const bj=JSON.stringify(S.budgets||{});
+  if(SIG.__budgets!==bj){ SIG.__budgets=bj; S.farmV.budgets=now; S.farmU=now; }
+  pending=countPending(); }
+function killRec(id){ S.tomb=S.tomb||{}; S.tomb[id]=Date.now(); }
+
+/* ── what the Sheet has NOT yet acknowledged ──
+   S.clean holds, per record, the version the Sheet confirmed it has.
+   A record is unsaved only when its own version differs from that.
+   No clock comparison anywhere, so phones with wrong clocks are fine. */
+const isDirty=r=>Number(r.u||0)!==Number(S.clean[r.id]);
+const tombSig=()=>JSON.stringify(S.tomb||{});
+const tombDirty=()=>tombSig()!==(S.cleanTomb||'{}');
+function countPending(){ let c=tombDirty()?1:0;
+  SYNC_LISTS.forEach(k=>(S[k]||[]).forEach(r=>{ if(r&&r.id&&isDirty(r)) c++; }));
+  if(Number(S.farmU||0)!==Number(S.cleanFarmU)) c++;
+  return c; }
+function delta(){
+  const d={tomb:S.tomb||{},seq:S.seq,farmU:0}, mark=[];
+  SYNC_LISTS.forEach(k=>{ const out=(S[k]||[]).filter(r=>r&&r.id&&isDirty(r));
+    if(out.length) d[k]=out;
+    out.forEach(r=>mark.push([r.id,Number(r.u||0)])); });
+  let sentFarm=false;
+  if(Number(S.farmU||0)!==Number(S.cleanFarmU)){
+    /* send only the settings this phone has actually touched */
+    const fv=S.farmV||{}, only={};
+    FARM_KEYS.forEach(k=>{ if(fv[k]!==undefined) only[k]=S.farm[k]; });
+    d.farm=only; d.farmV=fv; d.farmU=Number(S.farmU)||0; sentFarm=true;
+    if(fv.budgets!==undefined) d.budgets=S.budgets;
+  }
+  return {d:d,mark:mark,sentFarm:sentFarm,sentFarmU:Number(S.farmU)||0};
+}
+/* everything the Sheet just handed back is, by definition, saved */
+function markClean(inc,mark,sent){
+  const srv={};
+  SYNC_LISTS.forEach(k=>(inc[k]||[]).forEach(r=>{ if(r&&r.id) srv[r.id]=Number(r.u||0); }));
+  const pushed={}; mark.forEach(x=>pushed[x[0]]=Number(x[1]));
+  const keep={};
+  SYNC_LISTS.forEach(k=>(S[k]||[]).forEach(r=>{ if(!r||!r.id) return;
+    const u=Number(r.u||0);
+    if(srv[r.id]===u || pushed[r.id]===u) S.clean[r.id]=u;      /* confirmed */
+    if(S.clean[r.id]!==undefined) keep[r.id]=S.clean[r.id]; }));
+  S.clean=keep;                                                  /* forget gone records */
+  /* the farm block is ticked off whenever we sent it and the Sheet took it,
+     even when its version is still zero */
+  if(sent && sent.sentFarm && Number(S.farmU||0)===Number(sent.sentFarmU)) S.cleanFarmU=Number(sent.sentFarmU);
+  else if(Number(inc.farmU||0)>0 && Number(inc.farmU)===Number(S.farmU)) S.cleanFarmU=Number(S.farmU);
+  if(inc.svMax!==undefined){
+    const sv=Number(inc.svMax)||0;
+    /* the Sheet's counter is the authority. If it has gone BACKWARDS the
+       Sheet was reset or restored, so follow it down and re-read
+       everything, rather than asking for records that can never exist. */
+    S.since = (sv < Number(S.since||0)) ? sv : Math.max(Number(S.since)||0, sv);
+  }
+  if(inc.tabsAt!==undefined){ S.tabsAt=Number(inc.tabsAt)||0; S.tabsWaiting=!!inc.tabsWaiting; }
+}
+
+/* ── merge what the Sheet sends back into what is already here ── */
+function mergeDown(inc){
+  const tomb=inc.tomb||{};
+  SYNC_LISTS.forEach(k=>{
+    const mine=S[k]||[], map={}, order=[];
+    const add=r=>{ if(!r||!r.id) return;
+      if(tomb[r.id]&&Number(tomb[r.id])>=Number(r.u||0)) return;
+      if(!map[r.id]){ map[r.id]=r; order.push(r.id); }
+      else if(Number(r.u||0)>Number(map[r.id].u||0)) map[r.id]=r; };
+    mine.forEach(add);
+    (inc[k]||[]).forEach(add);
+    S[k]=order.map(id=>map[id]).filter(Boolean);
+  });
+  if(inc.tomb){                      /* union, so a local deletion is never lost */
+    const t=Object.assign({},inc.tomb);
+    for(const id in (S.tomb||{})) if(!(t[id]>=S.tomb[id])) t[id]=S.tomb[id];
+    S.tomb=t;
+  }
+  if(inc.farm||inc.budgets){
+    const iv=inc.farmV||{}, fall=Number(inc.farmU||0);
+    FARM_KEYS.forEach(k=>{
+      if(!inc.farm || inc.farm[k]===undefined) return;
+      if(iv[k]===undefined) return;        /* they never changed it - not theirs to overwrite */
+      const theirs=Number(iv[k]), mine=Number((S.farmV||{})[k]||0);
+      if(theirs>mine){ S.farm[k]=inc.farm[k]; S.farmV[k]=theirs; }
+    });
+    if(inc.budgets && iv.budgets!==undefined){
+      const theirs=Number(iv.budgets), mine=Number((S.farmV||{}).budgets||0);
+      if(theirs>mine){ S.budgets=inc.budgets; S.farmV.budgets=theirs; }
+    }
+    S.farmU=Math.max(Number(S.farmU||0), fall);
+  }
+  if(inc.seq) for(const k in inc.seq) S.seq[k]=Math.max(Number(S.seq[k])||0,Number(inc.seq[k])||0);
+  if((S.products||[]).length||(S.sellers||[]).length) S.seeded=true;
+  (S.products||[]).forEach(pr=>{
+    if(!Array.isArray(pr.prices)||!pr.prices.length) pr.prices=[{label:'Retail',amt:Number(pr.rate)||0}];
+    pr.rate=Number(pr.prices[0].amt)||0; if(pr.low==null) pr.low=10; });
+  initSig();
+}
+
+/* did everything this phone sent actually arrive? */
+function landed(inc,mark){
+  if(!mark.length) return true;
+  const have={};
+  SYNC_LISTS.forEach(k=>(inc[k]||[]).forEach(r=>{ if(r&&r.id) have[r.id]=Number(r.u||0); }));
+  const tomb=inc.tomb||{};
+  for(let i=0;i<mark.length;i++){
+    const id=mark[i][0], u=mark[i][1];
+    if(tomb[id]) continue;                       /* deleted, so nothing to check */
+    if(!(have[id]>=u)) return false;
+  }
+  return true;
+}
+
+function jsonp(url,ms){ return new Promise((res,rej)=>{
+  const cb='fb'+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36);
+  const el=document.createElement('script');
+  const done=setTimeout(()=>{clean();rej(new Error('timeout'));},ms||25000);
+  function clean(){ clearTimeout(done); try{delete window[cb];}catch(e){window[cb]=undefined;} if(el.parentNode)el.parentNode.removeChild(el); }
+  window[cb]=d=>{ clean(); res(d); };
+  el.onerror=()=>{ clean(); rej(new Error('network')); };
+  el.src=url+(url.indexOf('?')<0?'?':'&')+'callback='+cb+'&t='+Date.now();
+  document.head.appendChild(el);
+}); }
+const nap=ms=>new Promise(r=>setTimeout(r,ms));
+/* a request that never answers must still end */
+async function post(url,body,ms){
+  const ac=(typeof AbortController!=='undefined')?new AbortController():null;
+  const t=setTimeout(()=>{ if(ac) ac.abort(); }, ms||20000);
+  try{
+    return await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:body, signal:ac?ac.signal:undefined});
+  } finally{ clearTimeout(t); }
+}
+async function postBlind(url,body,ms){
+  const ac=(typeof AbortController!=='undefined')?new AbortController():null;
+  const t=setTimeout(()=>{ if(ac) ac.abort(); }, ms||20000);
+  try{
+    return await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:body, signal:ac?ac.signal:undefined});
+  } finally{ clearTimeout(t); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ONE SYNC = send my changes, then ask the Sheet what it now has.
+
+   Nothing is marked "saved" until the Sheet hands those very
+   records back. If they are not there, it tries again, and the
+   changes stay queued on the phone in the meantime - so a busy
+   Sheet or a dead signal can never quietly swallow an order.
+   ══════════════════════════════════════════════════════════════ */
+/* the readable tabs are rewritten at most once every few minutes so ten
+   phones syncing at once stay cheap - this asks for it right now */
+/* Tells you exactly which part of the chain is broken, in plain words. */
+async function mDiag(){
+  openSheet(head('Checking your Google Sheet','One moment')+`<div class="cs" id="dg">Testing…</div>`);
+  const line=(ok,t)=>`<div class="row"><div class="av">${ok===null?'⏳':ok?'✅':'❌'}</div><div class="m"><b>${t}</b></div></div>`;
+  let html='';
+  if(!S.sheetUrl){
+    html=line(false,'No Sheet link saved on this phone')+
+      `<div class="note">Paste your /exec link in Admin → Google Sheet.</div>`;
+    if($('dg')) $('dg').innerHTML=html; return;
+  }
+  html=line(true,'A Sheet link is saved');
+  html+=line(!asFile(), asFile()
+    ? 'Opened as a downloaded file — many phones block these from using the internet'
+    : 'Opened from a proper web link');
+  html+=line(!!S.everSynced, S.everSynced
+    ? 'This phone has reached the Sheet before'
+    : 'This phone has NEVER reached the Sheet');
+  if($('dg')) $('dg').innerHTML=html+line(null,'Asking the Sheet to answer…');
+
+  let ans=null, err='';
+  try{ ans=await jsonp(S.sheetUrl+'?since=0',15000); }catch(e){ err=String(e.message||e); }
+
+  if(!ans){
+    html+=line(false,'The Sheet did not answer — most likely the OLD connector');
+    html+=`<div class="note"><b>Two possible reasons.</b><br>
+      1. The Sheet still has the <b>old connector code</b> — most likely. Open the Sheet →
+         Extensions → Apps Script → paste the new <b>GoogleSheet_Connector.gs</b> over everything →
+         Save → <b>Deploy → Manage deployments → pencil → Version: New version → Deploy</b>.<br>
+      2. This phone has no internet right now.</div>`;
+    S.oldConn=true;
+  } else if(ans.v===undefined){
+    html+=line(true,'The Sheet answered');
+    html+=line(false,'But it is running the OLD connector');
+    html+=`<div class="note">Open the Sheet → Extensions → Apps Script → paste the new
+      <b>GoogleSheet_Connector.gs</b> over everything → Save →
+      <b>Deploy → Manage deployments → pencil → Version: New version → Deploy</b>.
+      Your /exec link does not change and no rows are lost.</div>`;
+    S.oldConn=true;
+  } else {
+    html+=line(true,'The Sheet answered, and the connector is up to date (v'+ans.v+')');
+    S.everSynced=true;
+    S.oldConn=false;
+    const n=countPending();
+    html+=line(n===0,n===0?'Nothing is waiting to save':(n+' change'+(n>1?'s':'')+' still waiting'));
+    if(n) html+=`<div class="note">Tap <b>Send now</b> on the Home screen. If it stays stuck,
+      tell me and I will look further.</div>`;
+    else  html+=`<div class="note">Everything is in order. Last refreshed ${agoTxt(lastSync||S.syncedAt)}.</div>`;
+    html+=line(!ans.data.tabsWaiting, ans.data.tabsWaiting
+      ? 'The readable tabs are behind — tap "Update the Sheet\'s tabs now" in Admin'
+      : 'The readable tabs are up to date');
+  }
+  html+=`<button class="b o w" style="margin-top:13px" onclick="shut();render()">Close</button>`;
+  if($('dg')) $('dg').innerHTML=html;
+  try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
+}
+
+async function tidySheet(){
+  if(!S.sheetUrl){ toast('No Sheet linked yet'); return; }
+  toast('Updating the Sheet…');
+  try{
+    const r=await jsonp(S.sheetUrl+'?tabs=1&since='+(Number(S.since)||0),40000);
+    if(r&&r.ok){ if(r.data){ mergeDown(r.data); markClean(r.data,[],null); }
+      S.tabsWaiting=false; S.tabsAt=Date.now();
+      try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
+      toast('The Sheet tabs are up to date ✅'); render();
+    } else toast('Could not update the tabs');
+  }catch(e){ toast('Could not reach the Sheet'); }
+}
+let syncStarted=0;
+async function sync(loud,pull){
+  if(!S.sheetUrl){ if(loud) toast('No Google Sheet linked yet'); return false; }
+  /* if a previous run somehow never finished, let this one through */
+  if(syncing && Date.now()-syncStarted>60000){ syncing=false; }
+  if(syncing){ wantAgain=true; if(loud) toast('Already refreshing…'); return false; }
+  syncStarted=Date.now();
+  syncing=true; lastErr=''; setSync('working'); if(loud) render();
+  const jit=()=>Math.floor(Math.random()*600);
+  const waits=[0,700+jit(),1900+jit(),4200+jit(),8000+jit()];
+  let ok=false, kind='';
+  try{
+    for(let a=0; a<waits.length && !ok; a++){
+      /* a busy Sheet is worth waiting out; no signal is not - say so quickly
+         and let the automatic retry pick it up later */
+      if(kind==='old') break;                         /* retrying cannot help */
+      if(a && kind==='net' && a>=2) break;
+      if(a && navigator.onLine===false) break;
+      if(waits[a]) await nap(waits[a]);
+      stampChanges();
+      const dd=delta(), d=dd.d, mark=dd.mark;
+      const sendTomb=tombDirty(), tSig=tombSig();
+      const since=Math.max(0,Number(S.since)||0);   /* the Sheet's counter, never a clock */
+
+      /* ══ ONE ROUND TRIP ══
+         The send used to be fire-and-forget, so the phone had to pause and
+         then ask a second time - two Apps Script runs plus a wait. Now the
+         send itself replies with the merged answer. If this phone's browser
+         will not let us read that reply, it falls back to the old two-step
+         way and remembers, so it only pays that price once. */
+      let out=null;
+      const haveNews=(mark.length || dd.sentFarm || sendTomb);
+      const pkt=JSON.stringify({key:'farmbook',since:since,data:d});
+
+      if(haveNews && S.oneTrip!==false){
+        let res=null;
+        try{ res=await post(S.sheetUrl,pkt,12000); }
+        catch(e){
+          /* the browser would not let us read the reply, or there is no signal.
+             Only the first kind means we must use the slower two-step way. */
+          if(S.oneTrip===true){ lastErr='no signal'; kind='net'; continue; }
+          S.oneTrip=false; res=null;
+        }
+        if(res){
+          S.oneTrip=true;                     /* reading replies works on this phone */
+          S.oneTripTried=true;
+          let txt='';
+          try{ txt=await res.text(); }catch(e){ txt=''; }
+          let body=null;
+          try{ body=JSON.parse(txt); }catch(e){ body=null; }
+          if(body && body.ok && body.data){ out=body; }
+          else if(body && body.ok===false){ lastErr='the Sheet reported a problem'; kind='busy'; continue; }
+          else if(/^\s*ok/i.test(txt)){
+            /* An older connector is installed in the Sheet: it only replies
+               "ok" and has no way to answer back. Say so plainly instead of
+               retrying something that can never work. */
+            S.oldConn=true; lastErr='old connector'; kind='old'; break;
+          }
+          else { lastErr='the Sheet was busy'; kind='busy'; continue; }
+        }
+      }
+      if(out && out.v===undefined){ S.oldConn=true; lastErr='old connector'; kind='old'; break; }
+      if(out) S.oldConn=false;
+      if(!out){
+        if(haveNews){
+          try{ await postBlind(S.sheetUrl,pkt,12000); }
+          catch(e){ lastErr='no signal'; kind='net'; continue; }
+          await nap(mark.length>40?1200:650);
+        } else if(!pull){ ok=true; break; }
+        try{ out=await jsonp(S.sheetUrl+'?since='+since,15000); }
+        catch(e){
+          /* the send went out but nothing can answer: almost always an old
+             connector still sitting in the Sheet */
+          if(haveNews){ S.oldConn=true; lastErr='old connector'; kind='old'; break; }
+          lastErr='no answer from the Sheet'; kind='net'; continue;
+        }
+        if(out && out.v===undefined){ S.oldConn=true; lastErr='old connector'; kind='old'; break; }
+        if(out) S.oldConn=false;
+      }
+      if(!out||!out.ok||!out.data){ lastErr='the Sheet reported a problem'; continue; }
+      if(!landed(out.data,mark)){ lastErr='the Sheet was busy'; kind='busy'; continue; }
+      mergeDown(out.data);
+      markClean(out.data,mark,dd);   /* only now is anything treated as saved */
+      /* a working two-step sync means the signal is fine, so give the fast
+         one-trip path another go next time rather than being stuck slow */
+      if(S.oneTrip===false && !S.oneTripTried) S.oneTrip=null;
+      if(sendTomb){
+        let all=true;
+        const back=out.data.tomb||{};
+        for(const id in JSON.parse(tSig)) if(back[id]===undefined) all=false;
+        if(all) S.cleanTomb=tSig;        /* only what was actually sent */
+      }
+      ok=true;
+    }
+    lastSync=Date.now(); S.syncedAt=ok?lastSync:S.syncedAt;
+    if(ok) S.everSynced=true;
+    pending=countPending();
+    try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
+    setSync(ok?'ok':'fail');
+    if(loud) toast(ok?'Up to date ✅'
+      :kind==='old'?'Your Google Sheet still has the old connector — see Admin.'
+      :kind==='net'?'No internet just now. Everything is safe on this phone and will save by itself.'
+      :'The Sheet is busy — '+pending+' still to save. It will keep trying.');
+  }catch(e){ setSync('fail'); lastErr=String(e.message||e); if(loud) toast('Could not reach the Sheet'); }
+  syncing=false;
+  render();
+  if(wantAgain){ wantAgain=false; setTimeout(()=>sync(false,true),150); }
+  else if(!ok) setTimeout(()=>{ if(!syncing && countPending()) sync(false,true); }, 45000);
+  return ok;
+}
+const syncNow=loud=>sync(loud,true);
+
+/* every save queues a confirmed send, batched so typing does not spam it */
+function pushSheet(){
+  if(!S.sheetUrl) return;
+  pending=countPending(); setSync('dirty');
+  clearTimeout(syncTimer);
+  syncTimer=setTimeout(()=>{
+    sync(false, !mask.classList.contains('open'));   /* don't redraw under an open window */
+  }, 4000);
+}
+
+function agoTxt(t){ if(!t) return 'not yet';
+  const m=Math.floor((Date.now()-t)/60000);
+  if(m<1) return 'just now'; if(m<60) return m+'m ago';
+  const h=Math.floor(m/60); if(h<24) return h+'h ago'; return Math.floor(h/24)+'d ago'; }
+
+function setSync(st){
+  if(st===true||st===false||st===undefined) st=syncState;    /* never fake a good state */
+  else syncState=st;
+  const el=$('hSync'); if(!el) return;
+  if(!S.sheetUrl){ el.className='sync'; el.textContent='On this phone'; return; }
+  if(st==='working'){ el.className='sync on'; el.textContent='⏳ Saving…'; return; }
+  if(st==='fail'){ el.className='sync bad'; el.textContent='⚠ '+pending+' not saved'; return; }
+  if(pending){ el.className='sync on'; el.textContent='● '+pending+' to save'; return; }
+  el.className='sync ok'; el.textContent='✓ Saved'; }
+
+/* ═══════════════ 7. CHARTS ═══════════════ */
+function killCharts(){charts.forEach(c=>{try{c.destroy()}catch(e){}});charts=[];}
+const hasChart=()=>typeof window.Chart!=='undefined';
+function tip(){return{displayColors:false,backgroundColor:cvar('--ink'),titleColor:'#fff',bodyColor:'#fff',padding:9,cornerRadius:8};}
+function area(ctx,c){const g=ctx.createLinearGradient(0,0,0,170);g.addColorStop(0,c+'4d');g.addColorStop(1,c+'00');return g;}
+function last14(){return [...Array(14)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-(13-i));return ymd(d);});}
+
+/* ═══════════════ 8. VIEWS ═══════════════ */
+let adminOK=false;
+function mPin(){
+  openSheet(head('Admin is locked','Only the owner should change prices and people')+`
+    <label>4 digit code</label><input id="pinIn" type="password" inputmode="numeric" maxlength="8" placeholder="••••">
+    <button class="b o w" style="margin-top:14px" onclick="tryPin()">Open Admin</button>
+    <div class="hint">Forgot it? Clear this app's site data in the browser, or ask whoever set it.</div>`);
+  setTimeout(()=>{ if($('pinIn')) $('pinIn').focus(); },80);
+}
+function tryPin(){ if(val('pinIn')===String(S.farm.pin)){ adminOK=true; shut(); go('setup'); }
+  else toast('Wrong code'); }
+function go(v){
+  if(v==='setup' && S.farm.pin && !adminOK){ mPin(); return; }
+  V=v; document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  window.scrollTo(0,0); render(); }
+/* the refresh strip that sits at the top of every screen */
+function refreshBar(){
+  if(!S.sheetUrl) return `<div class="rf"><div class="t"><b>Saved on this phone only</b>
+      No Google Sheet linked yet — link one in Admin to share with the others.</div></div>`;
+  if(S.oldConn) return `<div class="rf" style="border-color:var(--red);background:var(--red-l)">
+      <div class="t"><b style="color:var(--red)">Your Google Sheet needs updating</b>
+        The Sheet still has the older connector code, so it cannot send anything back.
+        Nothing is lost — it is all safe on this phone and will save the moment you fix it.</div>
+      <button class="b gh s" onclick="mDiag()">How</button></div>`;
+  /* A phone that has never once reached the Sheet is showing the blank
+     starter book, not the farm's real data. Never let that pass silently. */
+  if(!S.everSynced){
+    if(syncing) return `<div class="rf" style="border-color:var(--orange)">
+        <div class="t"><b>⏳ Getting your farm's details…</b>
+          Fetching produce, prices, people and customers from the Google Sheet. One moment.</div></div>`;
+    return `<div class="rf" style="border-color:var(--red);background:var(--red-l)">
+        <div class="t"><b style="color:var(--red)">This phone has not reached your Google Sheet yet</b>
+          It is showing an empty starter book — your real customers, order takers and prices are in
+          the Sheet and have not come down.
+          ${asFile()?'<br><br><b>Most likely reason:</b> this page was opened as a <b>downloaded file</b>. Many phones stop a downloaded file from using the internet. Opening it from a proper web link fixes it — ask whoever sent it for the link.':'<br><br>Check this phone has internet, then tap Try again.'}</div>
+        <button class="b o s" onclick="syncNow(true)">Try again</button></div>`;
+  }
+  const p=pending;
+
+  if(syncing) return `<div class="rf" style="border-color:var(--orange)">
+      <div class="t"><b>⏳ Saving to your Google Sheet…</b>
+        One moment. <b>Please don't close this window</b> until it says <b>All changes saved</b>.</div></div>`;
+
+  if(p) return `<div class="rf" style="border-color:var(--orange);background:var(--orange-l)">
+      <div class="t"><b>${p} change${p>1?'s':''} not saved to the Sheet yet</b>
+        They upload on their own in a few seconds — you don't have to do anything.
+        <b>Please don't close this window until it says "All changes saved".</b>
+        In a hurry, tap <b>Send now</b>.</div>
+      <button class="b o s" onclick="syncNow(true)">↻ Send now</button></div>`;
+
+  if(S.tabsWaiting) return `<div class="rf" style="border-color:var(--green)">
+      <div class="t"><b style="color:var(--green)">✓ All changes saved</b> — safe to close this window.
+        The Sheet's readable tabs are still catching up; they fill in within a few minutes.</div>
+      <button class="b gh s" onclick="tidySheet()">Fill tabs</button></div>`;
+
+  return `<div class="rf" style="border-color:var(--green)">
+      <div class="t"><b style="color:var(--green)">✓ All changes saved</b> — safe to close this window.
+        Last checked ${agoTxt(lastSync||S.syncedAt)}.</div>
+      <button class="b g s" onclick="syncNow(true)">↻ Refresh</button></div>`;
+}
+function render(){ killCharts();
+  $('hName').textContent=S.farm.name||'FarmBook';
+  $('hDate').textContent=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+  setSync(true);
+  ({home:vHome,orders:vOrders,stock:vStock,money:vMoney,books:vBooks,setup:vSetup}[V])();
+}
+
+/* ---------- STOCK ---------- */
+function vStock(){
+  const rowsD=S.products.map(p=>stockBook(p.id));
+  const totalFree=R(rowsD.reduce((a,r)=>a+Math.max(0,r.free),0));
+  const worth=R(rowsD.reduce((a,r)=>a+Math.max(0,r.free)*(r.p.cost||0),0));
+  const short=rowsD.filter(r=>r.free<0), low=rowsD.filter(r=>r.free>=0&&r.free<=r.low);
+  $('main').innerHTML=refreshBar()+`<div class="pt">Stock</div>
+    <div class="ps">What is left right now, after taking off every order</div>
+
+    <div class="g2">
+      <div class="tile"><div class="ic g">🌾</div><div class="v n">${totalFree}</div><div class="l">Free to sell</div></div>
+      <div class="tile"><div class="ic o">₹</div><div class="v n">${money(worth)}</div><div class="l">What it cost you</div></div>
+    </div>
+
+    ${short.length?`<div class="warn" style="margin-top:12px">⚠️ <b>Promised more than you have.</b>
+      ${short.map(r=>esc(r.p.name)+' short by '+Math.abs(r.free)+' '+esc(r.p.unit)).join('; ')}.</div>`:''}
+    ${low.length?`<div class="note" style="margin-top:12px">🔔 Running low: <b>${low.map(r=>esc(r.p.name)+' ('+r.free+' '+esc(r.p.unit)+')').join(', ')}</b></div>`:''}
+
+    ${rowsD.length?rowsD.map(r=>`
+      <div class="card" style="margin-top:12px">
+        <div class="row" style="border:0;padding:0">
+          <div class="av">${emo(r.p.name)}</div>
+          <div class="m"><b>${esc(r.p.name)}</b><span>${priceSummary(r.p)} per ${esc(r.p.unit)}</span></div>
+          <div class="e"><b class="n" style="font-size:21px;color:${r.free<0?'var(--red)':r.free<=r.low?'var(--orange-d)':'var(--green)'}">${r.free}</b>
+            <span class="pill ${r.free<0?'late':r.free<=r.low?'new':'ok'}">${esc(r.p.unit)} free</span></div>
+        </div>
+        <table class="tb" style="margin-top:9px">
+          <tr><td>Brought in altogether</td><td class="r">${r.inn} ${esc(r.p.unit)}</td></tr>
+          <tr><td>Delivered to customers</td><td class="r">− ${r.delivered}</td></tr>
+          <tr><td>Still in the godown</td><td class="r"><b>${r.godown} ${esc(r.p.unit)}</b></td></tr>
+          <tr><td>Promised, not delivered yet</td><td class="r">− ${r.promised}</td></tr>
+          <tr><td><b>Free to sell</b></td><td class="r"><b style="color:${r.free<0?'var(--red)':'var(--ink)'}">${r.free} ${esc(r.p.unit)}</b></td></tr>
+        </table>
+        <div class="br" style="margin-top:10px">
+          <button class="b g s" onclick="mStock('${r.p.id}','in')">＋ Add stock</button>
+          <button class="b gh s" onclick="mStock('${r.p.id}','out')">− Wastage</button>
+          <button class="b gh s" onclick="mStock('${r.p.id}','set')">✎ Correct count</button>
+        </div>
+      </div>`).join('')
+      :`<div class="empty"><div class="em">🌾</div><h3>No produce yet</h3>
+        <p>Add what you grow in Admin, then its stock shows up here.</p>
+        <button class="b o" onclick="go('setup')">Go to Admin</button></div>`}
+
+    ${S.stockLogs.length?`<div class="card"><h3>Recent stock changes</h3><div class="cs">Newest first</div>
+      <div class="sx"><table class="tb"><tr><th>Date</th><th>Produce</th><th class="r">Change</th><th>Why</th><th>By</th></tr>
+      ${S.stockLogs.slice().reverse().slice(0,12).map(g=>`<tr><td>${niceDate(g.date)}</td><td>${esc(g.name)}</td>
+        <td class="r" style="color:${g.qty<0?'var(--red)':'var(--green)'}">${g.qty>0?'+':''}${g.qty} ${esc(g.unit||'')}</td>
+        <td>${esc(g.why||g.kind||'')}</td><td>${esc(nameOf(g.byId)||g.who||'—')}</td></tr>`).join('')}
+      </table></div></div>`:''}
+
+    <div class="hint" style="margin-top:12px">Free to sell = everything brought in, minus what has been delivered,
+      minus what is promised on orders not yet delivered. Cancel an order and its stock comes straight back.</div>`;
+}
+
+/* ---------- HOME ---------- */
+function vHome(){
+  const days=last14(), series=days.map(salesOn), any=S.orders.length>0, hasS=series.some(v=>v>0);
+  const g=cvar('--green');
+  $('main').innerHTML=refreshBar()+`
+    <div class="hero">
+      <div class="l">Sales today</div><div class="v n">${money(salesOn(today()))}</div>
+      <div class="cb sp">${hasS?'<canvas id="cSpark"></canvas>':''}</div>
+      <div class="r">
+        <div><b class="n">${S.orders.filter(o=>o.date===today()).length}</b><span>Orders today</span></div>
+        <div><b class="n">${S.orders.filter(o=>o.status==='Pending').length}</b><span>To deliver</span></div>
+        <div><b class="n">${money(S.payments.filter(p=>p.date===today()).reduce((s,p)=>s+p.amount,0))}</b><span>Cash received</span></div>
+      </div>
+    </div>
+    ${S.products.length?`<div class="eb">Stock right now <span style="float:right;font-weight:600;color:var(--muted);font-size:11.5px" onclick="go('stock')">see all ›</span></div>
+    <div class="card pad0">
+      ${S.products.slice(0,4).map(p=>{const r=stockBook(p.id);
+        return `<div class="row tap" onclick="go('stock')"><div class="av">${emo(p.name)}</div>
+          <div class="m"><b>${esc(p.name)}</b><span>${r.promised?r.promised+' '+esc(p.unit)+' promised':'nothing promised'}</span></div>
+          <div class="e"><b class="n" style="color:${r.free<0?'var(--red)':r.free<=r.low?'var(--orange-d)':'var(--ink)'}">${r.free}</b>
+            <span class="pill ${r.free<0?'late':r.free<=r.low?'new':'grey'}">${esc(p.unit)} free</span></div></div>`;}).join('')}
+    </div>`:''}
+    <div class="eb">Your money</div>
+    <div class="g2">
+      <div class="tile tap" onclick="go('money')"><div class="ic o">₹</div>${lateDues()>0?`<span class="badge">${money(lateDues())} late</span>`:''}<div class="v n">${money(totalDues())}</div><div class="l">To collect</div></div>
+      <div class="tile"><div class="ic g">🏦</div><div class="v n">${money(cashIn())}</div><div class="l">Cash in hand</div></div>
+      <div class="tile tap" onclick="go('stock')"><div class="ic o">🌾</div><div class="v n">${money(stockValue())}</div><div class="l">Stock worth</div></div>
+      <div class="tile tap" onclick="go('books')"><div class="ic g">📈</div><div class="v n">${money(profitMonth())}</div><div class="l">Profit this month</div></div>
+    </div>
+    ${any?`
+    <div class="card" style="margin-top:14px"><h3>Sales — last 14 days</h3><div class="cs">What you billed each day</div>
+      <div class="cb">${hasS?'<canvas id="cSales"></canvas>':'<div class="cempty">No sales in the last 14 days.</div>'}</div></div>
+    <div class="card"><h3>To collect — by how late</h3><div class="cs">Chase the red bars first</div>
+      <div class="cb s">${totalDues()>0?'<canvas id="cAge"></canvas>':'<div class="cempty">Everyone has paid. 🎉</div>'}</div></div>
+    <div class="card"><h3>Best sellers</h3><div class="cs">Produce by money earned</div>
+      <div class="cb">${topProduce().length?'<canvas id="cProd"></canvas>':'<div class="cempty">No sales yet.</div>'}</div></div>
+    ${S.sellers.length?`<div class="card"><h3>Sales by person</h3><div class="cs">Who is selling how much</div>
+      <div class="cb">${bySeller().length?'<canvas id="cSeller"></canvas>':'<div class="cempty">No sales linked to a person yet.</div>'}</div></div>`:''}
+    ${alerts()}`
+    :`<div class="card" style="margin-top:14px"><div class="empty"><div class="em">🍊</div><h3>Let's set you up</h3>
+        <p>Three quick steps and you're running. It takes two minutes.</p>
+        <div class="br" style="justify-content:center">
+          <button class="b o" onclick="mProduct()">1 · Add produce</button>
+          <button class="b gh" onclick="mCustomer()">2 · Add customer</button>
+          <button class="b gh" onclick="mSeller()">3 · Add sales person</button>
+        </div></div></div>
+      <div class="card"><div class="note">Then tap the big orange <b>＋</b> to add an order — you can even paste a WhatsApp message and it fills itself in.</div></div>`}`;
+
+  if(!hasChart()) return;
+  if(hasS) charts.push(new Chart($('cSpark'),{type:'line',data:{labels:days,datasets:[{data:series,borderColor:'#fff',borderWidth:2.4,tension:.4,pointRadius:0,fill:true,
+    backgroundColor:c=>{const gg=c.chart.ctx.createLinearGradient(0,0,0,38);gg.addColorStop(0,'rgba(255,255,255,.34)');gg.addColorStop(1,'rgba(255,255,255,0)');return gg;}}]},
+    options:{maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}}}}));
+  if(any&&hasS) charts.push(new Chart($('cSales'),{type:'line',data:{labels:days.map(d=>d.slice(8)),datasets:[{data:series,borderColor:g,borderWidth:2.4,tension:.38,pointRadius:0,pointHoverRadius:5,fill:true,backgroundColor:c=>area(c.chart.ctx,g)}]},
+    options:{maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},tooltip:{...tip(),callbacks:{label:c=>' '+money(c.parsed.y)}}},
+      scales:{x:{grid:{display:false},ticks:{maxTicksLimit:7,maxRotation:0}},y:{grid:{color:cvar('--line')},border:{display:false},ticks:{maxTicksLimit:4,callback:v=>'₹'+(v>=1000?v/1000+'k':v)}}}}}));
+  if(any&&totalDues()>0){const b=ageBuckets();
+    charts.push(new Chart($('cAge'),{type:'bar',data:{labels:b.map(x=>x.l),datasets:[{data:b.map(x=>x.v),borderRadius:6,borderSkipped:false,maxBarThickness:42,
+      backgroundColor:[cvar('--green'),'#8aa63f',cvar('--orange'),cvar('--red'),'#95240f']}]},
+      options:{maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...tip(),callbacks:{label:c=>' '+money(c.parsed.y)}}},
+        scales:{x:{grid:{display:false}},y:{grid:{color:cvar('--line')},border:{display:false},ticks:{maxTicksLimit:4,callback:v=>'₹'+(v>=1000?v/1000+'k':v)}}}}}));}
+  const tp=topProduce();
+  if(any&&tp.length) charts.push(new Chart($('cProd'),{type:'bar',data:{labels:tp.map(x=>x.name),datasets:[{data:tp.map(x=>x.v),borderRadius:6,borderSkipped:false,maxBarThickness:24,
+    backgroundColor:[cvar('--green'),cvar('--blue'),cvar('--orange'),cvar('--plum'),'#8f8574']}]},
+    options:{indexAxis:'y',maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...tip(),callbacks:{label:c=>' '+money(c.parsed.x)}}},
+      scales:{x:{grid:{color:cvar('--line')},border:{display:false},ticks:{maxTicksLimit:4,callback:v=>'₹'+(v>=1000?v/1000+'k':v)}},y:{grid:{display:false}}}}}));
+  const bs=bySeller();
+  if(S.sellers.length&&bs.length) charts.push(new Chart($('cSeller'),{type:'bar',data:{labels:bs.map(x=>x.name),datasets:[{data:bs.map(x=>x.v),borderRadius:6,borderSkipped:false,maxBarThickness:24,
+    backgroundColor:[cvar('--green'),cvar('--orange'),cvar('--blue'),cvar('--plum'),'#8f8574']}]},
+    options:{indexAxis:'y',maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...tip(),callbacks:{label:c=>' '+money(c.parsed.x)}}},
+      scales:{x:{grid:{color:cvar('--line')},border:{display:false},ticks:{maxTicksLimit:4,callback:v=>'₹'+(v>=1000?v/1000+'k':v)}},y:{grid:{display:false}}}}}));
+}
+function ageBuckets(){ const b=[{l:'Not due',v:0},{l:'1–7d',v:0},{l:'8–15d',v:0},{l:'16–30d',v:0},{l:'30d+',v:0}];
+  S.customers.forEach(c=>{const d=dues(c.id);if(d<=0)return;const o=oldestUnpaid(c.id);const a=o?dAgo(o.date):0;
+    b[a<=0?0:a<=7?1:a<=15?2:a<=30?3:4].v+=d;}); return b; }
+function topProduce(){ const m={};
+  S.orders.filter(o=>o.status!=='Cancelled').forEach(o=>o.items.forEach(i=>{
+    const p=S.products.find(x=>x.id===i.pid);
+    const key=(p&&p.name)||i.name;                 /* group by the produce, not the old name */
+    m[key]=(m[key]||0)+i.qty*i.rate;}));
+  return Object.keys(m).map(n=>({name:n,v:R(m[n])})).sort((a,b)=>b.v-a.v).slice(0,5); }
+function bySeller(){ const m={}; S.orders.filter(o=>o.status!=='Cancelled'&&o.sellerId).forEach(o=>{m[o.sellerId]=(m[o.sellerId]||0)+oTotal(o);});
+  return Object.keys(m).map(id=>{const s=S.sellers.find(x=>x.id===id);return{name:s?s.name:'—',v:R(m[id])};}).sort((a,b)=>b.v-a.v).slice(0,6); }
+function alerts(){
+  const outs=S.products.filter(p=>stockLeft(p.id)<0);
+  const low=S.products.filter(p=>stockLeft(p.id)>=0&&stockLeft(p.id)<=(p.low==null?10:p.low));
+  const late=S.customers.filter(c=>{const d=dues(c.id);const o=oldestUnpaid(c.id);return d>0&&o&&dAgo(o.date)>7;});
+  if(!low.length&&!late.length&&!outs.length) return '';
+  return `<div class="eb">Needs your attention</div>`+
+    (outs.length?`<div class="warn" style="margin-bottom:10px">⚠️ <b>You have promised more than you have.</b>
+      ${outs.map(p=>esc(p.name)+' is short by '+Math.abs(stockLeft(p.id))+' '+esc(p.unit)).join('; ')}.
+      Add stock or correct the count in Admin.</div>`:'')+
+    `<div class="card pad0">`+
+    late.slice(0,4).map(c=>`<div class="row"><div class="av id">${esc(c.code)}</div><div class="m"><b>${esc(c.name)}</b><span>${money(dues(c.id))} · ${dAgo(oldestUnpaid(c.id).date)} days late</span></div>
+      <div class="e"><button class="b wa s" onclick="remind('${c.id}')">Remind</button></div></div>`).join('')+
+    outs.slice(0,4).map(p=>`<div class="row"><div class="av">${emo(p.name)}</div><div class="m"><b>${esc(p.name)}</b><span style="color:var(--red)">short by ${Math.abs(stockLeft(p.id))} ${esc(p.unit)}</span></div>
+      <div class="e"><button class="b o s" onclick="mStock('${p.id}','in')">Add stock</button></div></div>`).join('')+
+    low.slice(0,4).map(p=>`<div class="row"><div class="av">${emo(p.name)}</div><div class="m"><b>${esc(p.name)}</b><span>only ${stockLeft(p.id)} ${esc(p.unit)} left</span></div>
+      <div class="e"><button class="b gh s" onclick="mStock('${p.id}','in')">Add stock</button></div></div>`).join('')+`</div>`;
+}
+
+/* ---------- ORDERS ---------- */
+let oFilter='All';
+function vOrders(){
+  const list=S.orders.filter(o=>oFilter==='All'||o.status===oFilter).sort((a,b)=>a.date<b.date?1:(a.code<b.code?1:-1));
+  $('main').innerHTML=refreshBar()+`<div class="pt">Orders</div><div class="ps">Every order you have taken</div>
+    <div class="tabs">${['All','Pending','Delivered','Cancelled'].map(t=>`<button class="${t===oFilter?'on':''}" onclick="oFilter='${t}';vOrders()">${t}</button>`).join('')}</div>
+    ${list.length?`<div class="card pad0">`+list.map(o=>{
+      const c=S.customers.find(x=>x.id===o.custId)||{}, s=S.sellers.find(x=>x.id===o.sellerId);
+      return `<div class="row tap" onclick="mOrderView('${o.id}')"><div class="av">${emo(o.items[0]&&o.items[0].name)}</div>
+        <div class="m"><b>${esc(c.name||'—')}</b><span>${esc(o.code)} · ${esc(c.code||'')}${s?' · '+esc(s.name):''}</span></div>
+        <div class="e"><b class="n">${money(oTotal(o))}</b><span class="pill ${o.status==='Delivered'?'ok':o.status==='Cancelled'?'grey':'new'}">${o.status}</span>
+          ${notSaved(o)?'<span class="pill late" title="not in the Sheet yet">● to save</span>':''}</div></div>`;}).join('')+`</div>`
+    :`<div class="card"><div class="empty"><div class="em">📦</div><h3>No orders yet</h3><p>Tap the orange ＋ button. You can type an order or paste a WhatsApp message.</p><button class="b o" onclick="mOrder()">＋ New order</button></div></div>`}`;
+}
+
+/* ---------- MONEY ---------- */
+function vMoney(){
+  const rows=S.customers.map(c=>({c,d:dues(c.id),o:oldestUnpaid(c.id)})).filter(r=>r.d>0)
+    .sort((a,b)=>(b.o?dAgo(b.o.date):0)-(a.o?dAgo(a.o.date):0));
+  $('main').innerHTML=`<div class="pt">Money</div><div class="ps">Who owes you, and what you spent</div>
+    <div class="g2" style="margin-bottom:12px">
+      <div class="tile"><div class="v n">${money(totalDues())}</div><div class="l">To collect</div></div>
+      <div class="tile"><div class="ic r">!</div><div class="v n" style="color:var(--red)">${money(lateDues())}</div><div class="l">Late (7+ days)</div></div>
+    </div>
+    <div class="br" style="margin-bottom:12px"><button class="b g" onclick="mPayment()">＋ Money received</button><button class="b o" onclick="mExpense()">＋ Expense</button></div>
+    <div class="eb">To collect</div>
+    ${rows.length?`<div class="card pad0">`+rows.map(r=>{const a=r.o?dAgo(r.o.date):0;
+      return `<div class="row"><div class="av id">${esc(r.c.code)}</div><div class="m"><b>${esc(r.c.name)}</b>
+        <span>${esc(r.c.mobile||'')} · ${a>7?`<b style="color:var(--red)">${a} days late</b>`:(a>0?a+' days':'today')}</span></div>
+        <div class="e"><b class="n">${money(r.d)}</b></div></div>
+        <div class="br" style="justify-content:flex-end;margin:-4px 0 9px">
+          <button class="b gh s" onclick="mLedger('${r.c.id}')">Ledger</button>
+          <button class="b wa s" onclick="remind('${r.c.id}')">Remind</button>
+          <button class="b g s" onclick="mPayment('${r.c.id}')">Got money</button></div>`;}).join('')+`</div>`
+      :`<div class="card"><div class="empty"><div class="em">✅</div><h3>Nothing pending</h3><p>All customers have paid up.</p></div></div>`}
+    <div class="eb">Recent spending</div>
+    ${S.expenses.length?`<div class="card pad0">`+S.expenses.slice().sort((a,b)=>a.date<b.date?1:-1).slice(0,10).map(e=>
+      `<div class="row"><div class="av">🧾</div><div class="m"><b>${esc(e.cat)}</b><span>${esc(e.date)} · ${esc(e.mode)}${e.note?' · '+esc(e.note):''}</span></div>
+        <div class="e"><b class="n">${money(e.amount)}</b></div></div>`).join('')+`</div>`
+      :`<div class="card"><div class="empty" style="padding:20px"><p style="margin:0">No expenses recorded yet.</p></div></div>`}`;
+}
+
+/* ---------- BOOKS ---------- */
+function vBooks(){
+  const sales=salesMonth(), cogs=cogsMonth(), exp=expMonth(), gp=R(sales-cogs), np=R(gp-exp);
+  const cats={}; S.expenses.filter(e=>inMonth(e.date)).forEach(e=>cats[e.cat]=(cats[e.cat]||0)+e.amount);
+  const bcats=Object.keys(S.budgets).filter(k=>S.budgets[k]>0);
+  $('main').innerHTML=`<div class="pt">Books</div><div class="ps">This month's profit, budget and ledgers</div>
+    <div class="card"><h3>Profit this month</h3><div class="cs">Simple and honest</div>
+      <table class="tb">
+        <tr><td>Sales</td><td class="r n">${money(sales)}</td></tr>
+        <tr><td>Cost of produce sold</td><td class="r n">− ${money(cogs)}</td></tr>
+        <tr><td><b>Gross profit</b></td><td class="r n"><b>${money(gp)}</b></td></tr>
+        <tr><td>Expenses</td><td class="r n">− ${money(exp)}</td></tr>
+        <tr><td><b>Net profit</b></td><td class="r n"><b style="color:${np>=0?'var(--green)':'var(--red)'}">${money(np)}</b></td></tr>
+      </table>
+      <div class="cs" style="margin-top:8px">Margin: <b>${sales?Math.round(gp/sales*100):0}%</b></div></div>
+
+    <div class="card"><h3>Budget vs actual</h3><div class="cs">This month's spending against your limits</div>
+      ${bcats.length?`<div class="cb"><canvas id="cBud"></canvas></div>
+        <div class="legend"><span><i style="background:${cvar('--green')}"></i>Budget</span><span><i style="background:${cvar('--orange')}"></i>Spent</span></div>`
+        :`<div class="cempty" style="height:80px">No budgets set. <button class="b gh s" style="margin-left:6px" onclick="go('setup')">Set budgets</button></div>`}</div>
+
+    <div class="card"><h3>Cash book</h3><div class="cs">Money in and out</div>
+      <table class="tb">
+        <tr><td>Money received from customers</td><td class="r n">${money(S.payments.reduce((s,p)=>s+p.amount,0))}</td></tr>
+        <tr><td>Money spent</td><td class="r n">− ${money(S.expenses.reduce((s,e)=>s+e.amount,0))}</td></tr>
+        <tr><td><b>Cash in hand</b></td><td class="r n"><b>${money(cashIn())}</b></td></tr>
+      </table></div>
+
+    <div class="eb">Customer ledgers</div>
+    ${S.customers.length?`<div class="card pad0">`+S.customers.map(c=>`<div class="row tap" onclick="mLedger('${c.id}')">
+        <div class="av id">${esc(c.code)}</div><div class="m"><b>${esc(c.name)}</b><span>${TYPES[c.code[0]]||''} · ${esc(c.mobile||'')}</span></div>
+        <div class="e"><b class="n">${money(dues(c.id))}</b><span class="pill ${dues(c.id)>0?'new':'ok'}">${dues(c.id)>0?'pending':'clear'}</span></div></div>`).join('')+`</div>`
+      :`<div class="card"><div class="empty" style="padding:20px"><p style="margin:0">No customers yet.</p></div></div>`}
+
+    <div class="card"><h3>Backup</h3><div class="cs">Download everything as a spreadsheet file</div>
+      <div class="br"><button class="b gh" onclick="exportCSV()">⬇ Download CSV</button><button class="b gh" onclick="exportJSON()">⬇ Backup file</button></div></div>`;
+  if(hasChart()&&bcats.length){
+    charts.push(new Chart($('cBud'),{type:'bar',data:{labels:bcats,datasets:[
+      {label:'Budget',data:bcats.map(k=>S.budgets[k]),backgroundColor:cvar('--green'),borderRadius:5,maxBarThickness:18},
+      {label:'Spent',data:bcats.map(k=>R(cats[k]||0)),backgroundColor:cvar('--orange'),borderRadius:5,maxBarThickness:18}]},
+      options:{maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...tip(),displayColors:true,callbacks:{label:c=>' '+c.dataset.label+': '+money(c.parsed.y)}}},
+        scales:{x:{grid:{display:false}},y:{grid:{color:cvar('--line')},border:{display:false},ticks:{maxTicksLimit:4,callback:v=>'₹'+(v>=1000?v/1000+'k':v)}}}}}));
+  }
+}
+
+/* ---------- SETUP ---------- */
+function vSetup(){
+  const low=S.products.filter(p=>stockLeft(p.id)<=(p.low==null?10:p.low));
+  const unchecked=S.products.filter(p=>p.fresh);
+  $('main').innerHTML=refreshBar()+`<div class="pt">Admin</div><div class="ps">Everything you can look at and change</div>
+
+    ${unchecked.length?`<div class="note">👋 <b>Check your prices first.</b> ${unchecked.map(p=>esc(p.name)).join(' and ')}
+      still ${unchecked.length>1?'have':'has'} the starter prices I put in. Tap the produce below and set your real ones.</div>`:''}
+
+    <div class="card"><h3>Farm details</h3><div class="cs">Shown on bills and reminders you send</div>
+      <label>Farm name</label><input id="fName" value="${esc(S.farm.name)}" placeholder="e.g. Green Valley Farm">
+      <div class="two"><div><label>Your mobile</label><input id="fMob" value="${esc(S.farm.mobile)}" inputmode="numeric" placeholder="10 digits" oninput="onlyNum(this,10)"></div>
+        <div><label>UPI ID</label><input id="fUpi" value="${esc(S.farm.upi)}" placeholder="name@bank"></div></div>
+      <div class="two"><div><label>Delivery takes (days)</label><input id="fLead" type="number" inputmode="numeric" value="${S.farm.leadDays||2}"></div>
+        <div><label>Usual shipping charge ₹</label><input id="fShip" type="number" inputmode="decimal" value="${S.farm.shipFee||0}"></div></div>
+      <div class="hint">Expected delivery date on each order = order date + this many days.</div>
+      <label>Lock Admin with a code</label>
+      <input id="fPin" value="${esc(S.farm.pin||'')}" inputmode="numeric" maxlength="8" placeholder="blank = no lock">
+      <div class="hint">The code stops your team opening this Admin screen and changing prices. Leave it blank on your own phone.
+        Who did what is recorded by the <b>Sold by</b> name on each order — there is only one file, shared by everyone.</div>
+      <button class="b g w" id="saveFarmBtn" style="margin-top:13px" onclick="saveFarm()">Save farm details</button></div>
+
+    <div class="card"><h3>Order takers</h3><div class="cs">Each gets an ID like suresh-001. No login, no password.</div>
+      ${S.sellers.length?S.sellers.map(x=>`<div class="row tap" onclick="mSeller('${x.id}')"><div class="av">🧑‍🌾</div>
+        <div class="m"><b>${esc(x.name)}</b><span>${esc(x.code)}${x.mobile?' · '+esc(x.mobile):''}</span></div>
+        <div class="e"><b class="n">${money(bySellerTotal(x.id))}</b><span class="pill grey">sold</span></div></div>`).join(''):'<div class="cs">None added yet.</div>'}
+      <button class="b o w" style="margin-top:12px" onclick="mSeller()">＋ Add order taker</button>
+      <div class="hint">Tap a name to change the spelling, add a mobile, or remove someone.</div></div>
+
+    <div class="card"><h3>Produce, prices &amp; stock</h3>
+      <div class="cs">Tap a produce to change its name, unit, cost and price list</div>
+      ${S.products.length?S.products.map(p=>{const l=stockLeft(p.id), lo=(p.low==null?10:p.low);
+        return `<div style="border-bottom:1px solid var(--line);padding:9px 0">
+          <div class="row tap" style="border:0;padding:0" onclick="mProduct('${p.id}')"><div class="av">${emo(p.name)}</div>
+            <div class="m"><b>${esc(p.name)}</b><span>${priceSummary(p)} per ${esc(p.unit)} · costs ${money(p.cost)}</span></div>
+            <div class="e"><b class="n" ${l<=lo?'style="color:var(--red)"':''}>${l}</b><span class="pill ${l<=lo?'late':'grey'}">${esc(p.unit)} left</span></div></div>
+          <div class="br" style="margin-top:8px">
+            <button class="b gh s" onclick="mStock('${p.id}','in')">＋ Add stock</button>
+            <button class="b gh s" onclick="mStock('${p.id}','out')">− Wastage</button>
+            <button class="b gh s" onclick="mStock('${p.id}','set')">✎ Correct count</button>
+            <button class="b gh s" onclick="mProduct('${p.id}')">₹ Prices</button></div></div>`;}).join(''):'<div class="cs">None added yet.</div>'}
+      <button class="b o w" style="margin-top:12px" onclick="mProduct()">＋ Add produce</button>
+      ${low.length?`<div class="note" style="margin-top:11px">⚠️ Running low: <b>${low.map(p=>esc(p.name)+' ('+stockLeft(p.id)+' '+esc(p.unit)+')').join(', ')}</b></div>`:''}</div>
+
+    <div class="card"><h3>Stock movements</h3><div class="cs">Every add, wastage and correction, newest first</div>
+      ${S.products.length?`<div class="sx"><table class="tb" style="margin-bottom:11px">
+        <tr><th>Produce</th><th class="r">Brought in</th><th class="r">Sold</th><th class="r">Left</th></tr>
+        ${S.products.map(p=>{const sold=R((p.stock||0)-stockLeft(p.id));
+          return `<tr><td>${esc(p.name)}</td><td class="r">${p.stock||0}</td><td class="r">${sold}</td>
+            <td class="r"><b ${stockLeft(p.id)<0?'style="color:var(--red)"':''}>${stockLeft(p.id)} ${esc(p.unit)}</b></td></tr>`;}).join('')}
+        </table></div>
+        <div class="hint">Left = everything brought in, minus every order that is not cancelled. Cancel an order and its stock comes straight back.</div>`:''}
+      ${S.stockLogs.length?`<div class="sx"><table class="tb"><tr><th>Date</th><th>Produce</th><th class="r">Change</th><th>Why</th><th>By</th><th></th></tr>
+        ${S.stockLogs.slice().reverse().slice(0,30).map(g=>`<tr><td>${niceDate(g.date)}</td><td>${esc(g.name)}</td>
+          <td class="r" style="color:${g.qty<0?'var(--red)':'var(--green)'}">${g.qty>0?'+':''}${g.qty} ${esc(g.unit||'')}</td>
+          <td>${esc(g.why||g.kind||'')}${g.note?' — '+esc(g.note):''}</td><td>${esc(nameOf(g.byId)||g.who||'—')}</td>
+          <td class="r"><button class="b gh s" title="Undo this entry" onclick="undoStock('${g.id}')">✕</button></td></tr>`).join('')}
+        </table></div>
+        <div class="hint">Tapped something twice by mistake? Undo the wrong line with ✕ and the stock goes back.</div>`
+        :'<div class="cs">Nothing yet. Use ＋ Add stock above when produce comes in.</div>'}</div>
+
+    <div class="card"><h3>Customers</h3><div class="cs">Auto numbered — R-0001 retailer, W-0001 wholesaler, H household, C corporate</div>
+      ${S.customers.length?S.customers.map(c=>`<div class="row tap" onclick="mCustomer('${c.id}')"><div class="av id">${esc(c.code)}</div>
+        <div class="m"><b>${esc(c.name)}</b><span>${TYPES[c.code[0]]||''} · ${esc(c.mobile||'no mobile')}</span></div>
+        <div class="e"><b class="n" ${dues(c.id)>0?'style="color:var(--orange-d)"':''}>${money(Math.max(0,dues(c.id)))}</b><span class="pill grey">due</span></div></div>`).join(''):'<div class="cs">None added yet.</div>'}
+      <button class="b o w" style="margin-top:12px" onclick="mCustomer()">＋ Add customer</button>
+      <div class="hint">Wholesalers (W) and companies (C) are offered your wholesale price automatically.</div></div>
+
+    <div class="card"><h3>Monthly budgets</h3><div class="cs">Set a limit per kind of spending</div>
+      ${EXPCATS.map(c=>`<div class="two" style="align-items:center;margin-bottom:7px"><div style="font-size:13.5px;font-weight:600">${c}</div>
+        <input type="number" inputmode="numeric" id="bud_${c.replace(/\W/g,'')}" value="${S.budgets[c]||''}" placeholder="₹ none"></div>`).join('')}
+      <button class="b g w" style="margin-top:10px" onclick="saveBudgets()">Save budgets</button></div>
+
+    <div class="card"><h3>Google Sheet</h3><div class="cs">${S.sheetUrl?'Connected — every change is copied to your Sheet.':'Not connected yet. You create the Sheet in your own Google account.'}</div>
+      ${S.sheetUrl?'':`<div class="note">There is no Sheet until you make one. Tap <b>Set up my Google Sheet</b> — it takes about 3 minutes, once.</div>`}
+      <button class="b ${S.sheetUrl?'gh':'o'} w" style="margin-top:11px" onclick="mConnector()">${S.sheetUrl?'View setup steps again':'Set up my Google Sheet'}</button>
+      <label>Connector link</label><input id="shUrl" value="${esc(S.sheetUrl)}" placeholder="Paste the /exec link here">
+      <div class="hint">Leave it empty and everything still works, saved on this phone only.</div>
+      <button class="b g w" style="margin-top:11px" onclick="saveSheet()">Save &amp; sync now</button></div>
+
+    <div class="card"><h3>Give this to your team</h3>
+      <div class="cs">So they don't have to set anything up</div>
+      ${S.sheetUrl?`<div class="note">One file, everybody uses the same one. Each person just picks their own name in
+          <b>Sold by</b> when they take an order — that is how the Sheet knows who did what.</div>
+        <ol style="padding-left:19px;font-size:13.5px;line-height:1.7;margin:8px 0">
+          <li>Tap <b>Copy my Sheet link</b> below.</li>
+          <li>Open <b>FarmBook.html</b> on a computer with Notepad.</li>
+          <li>Right at the top you'll see <b>CONFIG</b>. Paste the link inside <b>SHEET_URL: ''</b>.</li>
+          <li>Save, then send that one file to everyone. It opens already connected.</li>
+        </ol>
+        <button class="b g w" onclick="copySheetLink()">📋 Copy my Sheet link</button>`
+      :`<div class="note">Link your Google Sheet first (card above). Then this becomes a file you can hand out with nothing for them to set up.</div>`}
+    </div>
+
+    <div class="card"><h3>Sharing with the other phones</h3>
+      <div class="cs">${S.sheetUrl?'All three phones read from and write to your Sheet':'Not linked yet'}</div>
+      ${S.sheetUrl?`<div class="note">Change a price or the stock here and it reaches the other phones the next time they
+          open the app, swipe down, or tap <b>↻ Refresh</b>. Their orders come back to you the same way.</div>
+        <button class="b g w" style="margin-top:11px" onclick="syncNow(true)">↻ Refresh now</button>
+        <button class="b gh w" style="margin-top:9px" onclick="tidySheet()">Update the Sheet's tabs now</button>
+        <div class="hint">The Sheet's readable tabs were last filled ${S.tabsAt?agoTxt(S.tabsAt):'not yet'}${S.tabsWaiting?' · <b style="color:var(--orange-d)">changes waiting to appear there</b>':''}.
+          Your data is in the Sheet the instant it saves — these tabs are just the tidy view of it.</div>
+        <button class="b gh w" style="margin-top:9px" onclick="mDiag()">Check my Sheet connection</button>
+        <div class="hint">Last refreshed ${agoTxt(lastSync||S.syncedAt)}${pending?' · <b style="color:var(--orange-d)">'+pending+' waiting to save</b>':''}.
+          If two people change the same thing the later change wins, and anything you delete stays deleted everywhere.
+          The app is always up to date; the readable tabs in the Sheet catch up within a few minutes.</div>`
+      :`<div class="note">Link your Google Sheet in the card above first.</div>`}</div>
+
+    <div class="card"><h3>Backup</h3><div class="cs">A copy of everything, saved as one small file</div>
+      <button class="b gh w" onclick="backup()">⬇ Download a backup</button>
+      <label class="b gh w" style="margin-top:9px;cursor:pointer;text-align:center">⬆ Restore from a backup
+        <input type="file" accept=".json,application/json" style="display:none" onchange="restore(this.files[0])"></label>
+      <div class="hint">Restoring replaces everything on this phone with what is in the file.</div></div>
+
+    <div class="card"><h3>Danger zone</h3><div class="cs">Start over</div>
+      <button class="b gh w" style="color:var(--red)" onclick="wipe()">Delete all data</button></div>`;
+}
+function bySellerTotal(id){return R(S.orders.filter(o=>o.sellerId===id&&o.status!=='Cancelled').reduce((s,o)=>s+oTotal(o),0));}
+const EXPCATS=['Farm labour','Seeds','Fertilizer','Transport','Fuel','Packing','Rent','Electricity','Other'];
+
+function saveFarm(){S.farm.name=val('fName');S.farm.mobile=val('fMob');S.farm.upi=val('fUpi');
+  S.farm.leadDays=nval('fLead')||2;S.farm.shipFee=nval('fShip');
+  S.farm.pin=val('fPin').replace(/\D/g,''); if(S.farm.pin) adminOK=true;
+  save();toast('Saved ✅');render();}
+
+/* --- backup / restore --- */
+function backup(){
+  try{
+    const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download='FarmBook-backup-'+today()+'.json'; document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
+    toast('Backup saved to your downloads ✅');
+  }catch(e){ toast('Could not save the backup here'); }
+}
+function restore(file){
+  if(!file) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{
+      const d=JSON.parse(r.result);
+      if(!d || !Array.isArray(d.products) || !Array.isArray(d.orders)) throw new Error('bad');
+      if(!confirm('Replace everything on this phone with the backup?')) return;
+      localStorage.setItem(KEY,JSON.stringify(d)); S=load(); adminOK=true; save();
+      toast('Restored ✅'); go('home');
+    }catch(e){ toast('That file is not a FarmBook backup'); } };
+  r.readAsText(file);
+}
+function saveBudgets(){EXPCATS.forEach(c=>{const v=nval('bud_'+c.replace(/\W/g,''));if(v>0)S.budgets[c]=v;else delete S.budgets[c];});save();toast('Budgets saved ✅');}
+function saveSheet(){S.sheetUrl=val('shUrl');save();toast(S.sheetUrl?'Syncing to your Sheet…':'Sheet link removed');render();}
+function wipe(){
+  const linked=!!S.sheetUrl;
+  const msg=linked
+    ? 'Clear everything from THIS PHONE?\n\nYour Google Sheet is not touched, so the farm\'s data will come back down the next time this phone connects. To start the farm over you would have to clear the Sheet as well.'
+    : 'Delete everything and start fresh? This cannot be undone.';
+  if(!confirm(msg)) return;
+  const url=S.sheetUrl;
+  localStorage.removeItem(KEY);
+  S=JSON.parse(JSON.stringify(BLANK));
+  S.sheetUrl=url;                     /* keep it linked, or the phone goes blind */
+  adminOK=true; seedIfNew(); initSig();
+  try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
+  toast(linked?'This phone cleared — it will refill from the Sheet':'All cleared');
+  go('home');
+  if(url) setTimeout(()=>syncNow(false),600);
+}
+
+/* ═══════════════ 9. MODALS ═══════════════ */
+const mask=$('mask'), sheetBox=$('sheetBox');
+/* NOTE: never name these open()/close() - in an inline onclick the browser
+   finds document.open/document.close first and ours would never run.
+   That is exactly why the X button used to do nothing. */
+function openSheet(html){sheetBox.innerHTML=html;mask.classList.add('open');}
+function shut(){mask.classList.remove('open');sheetBox.innerHTML='';}
+mask.addEventListener('click',e=>{if(e.target===mask)shut();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&mask.classList.contains('open'))shut();});
+const head=(t,s)=>`<button class="x" onclick="shut()" aria-label="Close">✕</button><h2>${t}</h2><div class="cs">${s||''}</div>`;
+
+/* --- customer --- */
+function mCustomer(id){
+  const c=id?S.customers.find(x=>x.id===id):null;
+  openSheet(head(c?'Edit customer':'Add customer', c?esc(c.code):'They get a number automatically')+`
+    <label>Type of customer</label>
+    <select id="cType" ${c?'disabled':''}>${Object.keys(TYPES).map(k=>`<option value="${k}" ${c&&c.code[0]===k?'selected':''}>${TYPES[k]} (${k}-0001)</option>`).join('')}</select>
+    <label>Name <span class="req">*</span></label><input id="cName" value="${c?esc(c.name):''}" placeholder="Shop or person name">
+    <label>Mobile number <span class="req">*</span></label>
+    <input id="cMob" value="${c?esc(c.mobile):''}" inputmode="numeric" placeholder="10 digits, nothing else" oninput="onlyNum(this,10)">
+    <div class="hint">Exactly 10 digits. This is how the customer is found and reminded, so a wrong number means a lost customer.</div>
+    <label>Address / area</label><input id="cAddr" value="${c?esc(c.address||''):''}">
+    <div class="two"><div><label>Pay within (days)</label><input id="cTerms" type="number" inputmode="numeric" value="${c?(c.terms||0):0}"></div>
+      <div><label>Sales person</label><select id="cSeller"><option value="">—</option>${S.sellers.map(s=>`<option value="${s.id}" ${c&&c.sellerId===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div></div>
+    <button class="b o w" style="margin-top:14px" onclick="saveCustomer('${id||''}')">${c?'Save changes':'Add customer'}</button>
+    ${c?`<div class="note" style="margin-top:12px">Owes you <b>${money(Math.max(0,dues(c.id)))}</b> across
+        ${S.orders.filter(o=>o.custId===c.id).length} order(s).</div>
+      <button class="b gh w" style="margin-top:9px;color:var(--red)" onclick="delCustomer('${c.id}')">Remove this customer</button>`:''}`);
+}
+function saveCustomer(id){
+  const name=val('cName'), mob=digits(val('cMob'));
+  let mErr=badMobile(mob);
+  if(!mErr && S.customers.some(c=>c.mobile===mob && c.id!==id)) mErr='Another customer already has this number';
+  if(!showErrs({cName: name?'':'Name is needed', cMob: mErr})){ toast('Please fill the boxes marked in red'); return; }
+  if(!id){
+    const t=val('cType')||'R';
+    S.customers.push({id:uid(),code:newCustCode(t),name,mobile:mob,address:val('cAddr'),terms:nval('cTerms'),sellerId:val('cSeller'),byId:val('cSeller')});
+    toast('Customer added ✅');
+  }else{
+    const c=S.customers.find(x=>x.id===id);
+    if(!c){ toast('This customer was removed on another phone'); shut(); render(); return; }
+    Object.assign(c,{name,mobile:mob,address:val('cAddr'),terms:nval('cTerms'),sellerId:val('cSeller')});
+    toast('Saved ✅');
+  }
+  save();shut();render();
+}
+
+function delCustomer(id){
+  if(S.orders.some(o=>o.custId===id)){ toast('They have orders — cannot remove'); return; }
+  if(!confirm('Remove this customer?')) return;
+  killRec(id); S.customers=S.customers.filter(x=>x.id!==id); save(); shut(); toast('Removed'); render();
+}
+
+/* --- the people who take orders --- */
+function mSeller(id){
+  const s=id?S.sellers.find(x=>x.id===id):null;
+  const sold=s?bySellerTotal(s.id):0, cnt=s?S.orders.filter(o=>o.sellerId===s.id).length:0;
+  openSheet(head(s?'Edit order taker':'Add order taker', s?esc(s.code):'They get an ID like suresh-001')+`
+    <label>Name <span class="req">*</span></label><input id="sName" value="${s?esc(s.name):''}" placeholder="e.g. Suresh">
+    <label>Mobile (optional)</label>
+    <input id="sMob" value="${s?esc(s.mobile||''):''}" inputmode="numeric" placeholder="10 digits" oninput="onlyNum(this,10)">
+    ${s?`<div class="note" style="margin-top:12px">Their ID <b>${esc(s.code)}</b> never changes, so old orders keep matching.
+        So far: <b>${cnt}</b> order${cnt===1?'':'s'}, <b>${money(sold)}</b> sold.</div>`
+      :`<div class="hint">No password, no login. The name just marks who took the order.</div>`}
+    <button class="b o w" style="margin-top:14px" onclick="saveSeller('${id||''}')">${s?'Save changes':'Add person'}</button>
+    ${s?`<button class="b gh w" style="margin-top:9px;color:var(--red)" onclick="delSeller('${id}')">Remove this person</button>`:''}`);
+}
+function saveSeller(id){
+  const n=val('sName'), m=digits(val('sMob'));
+  if(!showErrs({sName: n?'':'Name is needed', sMob: (m&&badMobile(m))||''})){ toast('Please fill the boxes marked in red'); return; }
+  if(id){ const t=S.sellers.find(x=>x.id===id);
+    if(!t){ toast('This person was removed on another phone'); shut(); render(); return; }
+    Object.assign(t,{name:n,mobile:m}); toast('Saved ✅'); }
+  else { S.sellers.push({id:uid(),code:newSellerCode(n),name:n,mobile:m}); toast('Added ✅'); }
+  save();shut();render();
+}
+function delSeller(id){
+  if(S.orders.some(o=>o.sellerId===id)){ toast('They have orders — cannot remove'); return; }
+  if(!confirm('Remove this person?')) return;
+  killRec(id); S.sellers=S.sellers.filter(x=>x.id!==id); save(); shut(); toast('Removed'); render();
+}
+
+/* --- produce, its price list, and its stock --- */
+const UNIT_LIST=['kg','gram','piece','dozen','box','crate','bundle','packet'];
+let P=null;
+function mProduct(id){
+  const p=(id&&id!==true)?S.products.find(x=>x.id===id):null;
+  P={id:p?p.id:'', thenOrder:(id===true), name:p?p.name:'', unit:p?p.unit:'kg',
+     cost:p?(p.cost||0):0, stock:p?(p.stock||0):0, low:p?(p.low==null?10:p.low):10,
+     prices:p?JSON.parse(JSON.stringify(plist(p))):[{label:'Retail',amt:0},{label:'Wholesale',amt:0}]};
+  drawProduct();
+}
+function keepP(){ if(!P) return;
+  if($('pName')) P.name=val('pName');
+  if($('pUnit')) P.unit=val('pUnit');
+  if($('pCost')) P.cost=nval('pCost');
+  if($('pLow'))  P.low=nval('pLow');
+  if($('pStock'))P.stock=nval('pStock');
+  P.prices.forEach((x,k)=>{ if($('plb'+k)) x.label=val('plb'+k); if($('pam'+k)) x.amt=nval('pam'+k); });
+}
+function addPriceRow(){ keepP(); P.prices.push({label:'',amt:0}); drawProduct(); }
+function delPriceRow(k){ keepP(); P.prices.splice(k,1); if(!P.prices.length) P.prices.push({label:'Retail',amt:0}); drawProduct(); }
+function drawProduct(){
+  const editing=!!P.id, left=editing?stockLeft(P.id):0;
+  openSheet(head(editing?'Edit produce':'Add produce','A fruit or vegetable you sell')+`
+    <label>Name</label><input id="pName" value="${esc(P.name)}" placeholder="e.g. Organic Mosambi">
+    <div class="two"><div><label>Unit</label><select id="pUnit">${UNIT_LIST.map(u=>`<option ${P.unit===u?'selected':''}>${u}</option>`).join('')}</select></div>
+      <div><label>Your cost ₹ per ${esc(P.unit)}</label><input id="pCost" type="number" inputmode="decimal" value="${P.cost||''}"></div></div>
+
+    <label>Price list — these appear in the order screen</label>
+    <div class="pr" style="color:var(--muted);font-size:11px;font-weight:600"><div>NAME OF PRICE</div><div>₹ PER ${esc(P.unit).toUpperCase()}</div><div></div></div>
+    ${P.prices.map((x,k)=>`<div class="pr">
+      <input id="plb${k}" value="${esc(x.label)}" placeholder="e.g. Retail">
+      <input id="pam${k}" type="number" inputmode="decimal" value="${x.amt||''}" placeholder="0">
+      <button class="b gh s" onclick="delPriceRow(${k})">✕</button></div>`).join('')}
+    <button class="b gh w" style="margin-top:4px" onclick="addPriceRow()">＋ Add another price</button>
+    <div class="hint">Retailers and households are offered the <b>Retail</b> price, wholesalers and companies the <b>Wholesale</b> price. Add your own, e.g. "Festival" or "10 kg box".</div>
+
+    <label>Warn me when stock falls below</label><input id="pLow" type="number" inputmode="decimal" value="${P.low}">
+    ${editing
+      ?`<div class="note" style="margin-top:12px">📦 <b>${left} ${esc(P.unit)} left</b> right now.
+          Use the stock buttons on the Admin screen to add or correct it — that keeps a record of what changed.</div>`
+      :`<label>Stock you have right now</label><input id="pStock" type="number" inputmode="decimal" value="${P.stock||''}" placeholder="0">`}
+
+    <button class="b o w" style="margin-top:14px" onclick="saveProduct()">${editing?'Save changes':'Add produce'}</button>
+    ${editing?`<button class="b gh w" style="margin-top:9px;color:var(--red)" onclick="delProduct('${P.id}')">Remove this produce</button>`:''}`);
+}
+function saveProduct(){
+  keepP();
+  if(!P.name){toast('Enter a name');return;}
+  let prices=P.prices.filter(x=>String(x.label).trim()!=='').map(x=>({label:String(x.label).trim(),amt:R(x.amt)}));
+  if(!prices.length) prices=[{label:'Retail',amt:R(P.prices[0]?P.prices[0].amt:0)}];
+  const d={name:P.name,aliases:'',unit:P.unit,cost:R(P.cost),low:R(P.low),prices:prices,rate:prices[0].amt,fresh:false};
+  if(P.id){ const t=S.products.find(x=>x.id===P.id);
+    if(!t){ toast('This produce was removed on another phone'); P=null; shut(); render(); return; }
+    Object.assign(t,d); toast('Saved ✅'); }
+  else { S.products.push(Object.assign({id:uid(),stock:R(P.stock)},d)); toast('Produce added ✅'); }
+  const again=P.thenOrder; P=null; save();
+  if(again){ mOrder(); } else { shut(); render(); }
+}
+function delProduct(id){
+  if(S.orders.some(o=>o.items.some(i=>i.pid===id))){ toast('It is used in orders — cannot remove'); return; }
+  if(!confirm('Remove this produce?')) return;
+  killRec(id); S.products=S.products.filter(x=>x.id!==id); P=null; save(); shut(); toast('Removed'); render();
+}
+
+function undoStock(lid){
+  const g=S.stockLogs.find(x=>x.id===lid); if(!g) return;
+  if(!confirm('Undo this stock entry? '+(g.qty>0?'+':'')+g.qty+' '+(g.unit||'')+' of '+g.name)) return;
+  const p=S.products.find(x=>x.id===g.pid);
+  if(p) p.stock=R((p.stock||0)-g.qty);
+  killRec(lid); S.stockLogs=S.stockLogs.filter(x=>x.id!==lid);
+  save(); toast('Undone — '+(p?g.name+' is now '+stockLeft(p.id)+' '+p.unit:'entry removed')); render();
+}
+
+/* --- stock in / out / correction, with a record of every change --- */
+const STOCK_WHY={in:['Own harvest','Bought from another farm','Opening stock','Other'],
+                 out:['Wastage / spoiled','Given free / sample','Own use','Other'],
+                 set:['Counted the godown','Correcting a mistake','Other']};
+function mStock(pid,mode){
+  const p=S.products.find(x=>x.id===pid), left=stockLeft(pid);
+  const t={in:'Add stock',out:'Take stock out',set:'Correct the stock'}[mode];
+  openSheet(head(t, esc(p.name)+' · '+left+' '+esc(p.unit)+' left now')+`
+    <label>${mode==='set'?'How much is actually left':'How many '+esc(p.unit)}</label>
+    <input id="stQ" type="number" inputmode="decimal" value="${mode==='set'?left:''}" placeholder="0">
+    <label>Why</label><select id="stW">${STOCK_WHY[mode].map(w=>`<option>${w}</option>`).join('')}</select>
+    <label>Note (optional)</label><input id="stN" placeholder="e.g. picked from the north block">
+    ${byPicker('stBy','Recorded by')}
+    <button class="b o w" style="margin-top:14px" onclick="saveStock('${pid}','${mode}')">Save</button>`);
+}
+function saveStock(pid,mode){
+  const p=S.products.find(x=>x.id===pid), q=nval('stQ');
+  if(!val('stBy')){toast('Pick who is recording this');return;}
+  if(!once('stock|'+pid+'|'+mode+'|'+q)){ shut(); return; }
+  let delta;
+  if(mode==='set'){ delta=R(q-stockLeft(pid)); if(delta===0){ shut(); toast('Nothing to change'); return; } }
+  else if(mode==='out'){ if(!(q>0)){toast('Enter how many');return;} delta=-R(q); }
+  else { if(!(q>0)){toast('Enter how many');return;} delta=R(q); }
+  p.stock=R((p.stock||0)+delta);
+  S.stockLogs.push({id:uid(),date:today(),pid:pid,name:p.name,unit:p.unit,qty:delta,
+    kind:{in:'Added',out:'Taken out',set:'Corrected'}[mode],why:val('stW'),note:val('stN'),byId:val('stBy')});
+  save(); shut(); toast('Stock is now '+stockLeft(pid)+' '+p.unit+' ✅'); render();
+}
+
+/* --- ORDER: type it, paste a WhatsApp message, or add a screenshot --- */
+let D=null, orderRun=0;
+function addDays(d,n){const x=new Date(d+'T00:00');x.setDate(x.getDate()+(+n||0));return ymd(x);}
+function estDeliv(){ return addDays(D.orderDate||today(), S.farm.leadDays||2); }
+function niceDate(d){ try{return new Date(d+'T00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});}catch(e){return d;} }
+
+function mOrder(id){
+  if(!S.products.length){mProduct(true);toast('Add one produce first');return;}
+  D={editId:'',custId:'',custNew:'',mobile:'',type:'R',sellerId:S.sellers[0]?S.sellers[0].id:'',items:[],paid:false,note:'',
+     orderDate:today(), pincode:'', city:'', address:'', ship:'free', shipFee:0, addNewSeller:false};
+  orderRun++;
+  const o=id?S.orders.find(x=>x.id===id):null;
+  if(o){ D.editId=o.id; D.custId=o.custId; D.sellerId=o.sellerId; D.orderDate=o.date;
+    D.paid=!!(o.payId && S.payments.some(x=>x.id===o.payId));
+    D.pincode=o.pincode||''; D.city=o.city||''; D.address=o.address||'';
+    D.ship=o.shipFee>0?'paid':'free'; D.shipFee=o.shipFee||0; D.note=o.note||'';
+    D.items=o.items.map(i=>({pid:i.pid,name:i.name,qty:i.qty,unit:i.unit,rate:i.rate,plabel:i.plabel||'',custom:!!i.custom})); }
+  drawOrder();
+}
+/* the number belongs to somebody we already know - switch to them, so the
+   right price band applies before anything is added up */
+function knownMobile(v){
+  if(!D||D.custId) return;
+  const box=$('oKnown');
+  const d=digits(v);
+  const c=(d.length===10)?S.customers.find(x=>x.mobile===d):null;
+  D.knownCust=c?c.id:'';
+  if(!c){ if(box){box.innerHTML='';box.style.display='none';} return; }
+  D.type=c.code[0]||'R';
+  repriceAll(); liveT();                       /* right prices, no redraw */
+  if(box){ box.style.display='block';
+    box.innerHTML='✓ This number is <b>'+esc(c.name)+'</b> ('+esc(c.code)+'). '
+      +'The order will go to them, at '+esc(TYPES[c.code[0]]||'their')+' prices.'; }
+}
+function custType(){ if(!D) return 'R';
+  if(D.custId){ const c=S.customers.find(x=>x.id===D.custId); return (c&&c.code)?c.code[0]:'R'; }
+  return D.type||'R'; }
+function repriceAll(){ const t=custType();
+  D.items.forEach(i=>{ if(i.custom) return; const p=S.products.find(x=>x.id===i.pid); if(!p) return;
+    const pk=pickPrice(p,t); i.rate=Number(pk.amt)||0; i.plabel=pk.label; }); }
+function setItemProduce(x,v){
+  const i=D.items[x]; if(!i) return;
+  keep();
+  if(v==='__new'){ P=null; const nm=i.name; D.items.splice(x,1); drawOrder();
+    setTimeout(()=>{ mProduct(); if($('pName')) $('pName').value=nm; },60); return; }
+  const p=S.products.find(y=>y.id===v); if(!p) return;
+  const pk=pickPrice(p,custType());
+  Object.assign(i,{pid:p.id,name:p.name,unit:p.unit,rate:Number(pk.amt)||0,plabel:pk.label,custom:false});
+  drawOrder();
+}
+function pickRate(x,v){ const i=D.items[x], p=S.products.find(y=>y.id===i.pid);
+  if(v==='__c'){ i.custom=true; i.plabel='Typed'; }
+  else { const pk=plist(p)[Number(v)]; if(pk){ i.custom=false; i.rate=Number(pk.amt)||0; i.plabel=pk.label; } }
+  keep(); drawOrder(); }
+function keep(){ // remember what is typed before a redraw
+  if(!D) return;
+  if($('oNewName'))D.custNew=val('oNewName'); if($('oNewMob'))D.mobile=val('oNewMob'); if($('oNewType'))D.type=val('oNewType');
+  if($('oDate'))D.orderDate=val('oDate')||today();
+  if($('oPin'))D.pincode=val('oPin'); if($('oCity'))D.city=val('oCity'); if($('oAddr'))D.address=val('oAddr');
+  if($('oShipFee'))D.shipFee=nval('oShipFee');
+  if($('waText'))D.note=$('waText').value;      /* keep the pasted message */
+}
+const itemsSum=()=>D.items.reduce((a,i)=>a+i.qty*i.rate,0);
+const grand=()=>R(itemsSum()+(D.ship==='paid'?(+D.shipFee||0):0));
+
+function drawOrder(){
+  openSheet(head(D.editId?'Edit order':'New order', D.editId?'Change anything and save again':'Fill it in, or let a message fill it for you')+`
+    <label>Paste WhatsApp msg or order here or screenshot here</label>
+    <textarea id="waText" placeholder="Paste the customer's message here…&#10;&#10;e.g. Bhaiya 5 kg organic mosambi&#10;2 kg organic orange&#10;Ramesh 9820011111&#10;Pune 411001">${esc(D.note||'')}</textarea>
+    <div class="br" style="margin-top:8px">
+      <button class="b g" onclick="readText()">Read this</button>
+      <label class="b gh" style="margin:0;cursor:pointer">📷 Add screenshot
+        <input type="file" accept="image/*" id="shotFile" style="display:none" onchange="readShot(this.files[0])"></label>
+    </div>
+    <div class="hint" id="shotMsg">It picks up the name, mobile number, items and pincode where it can.</div>
+
+    <label>Customer <span class="req">*</span></label>
+    <select id="oCust" onchange="keep();D.custId=this.value;repriceAll();drawOrder()">
+      <option value="">— New customer —</option>
+      ${S.customers.map(c=>`<option value="${c.id}" ${D.custId===c.id?'selected':''}>${esc(c.code)} · ${esc(c.name)}${c.mobile?' · '+esc(c.mobile):''}</option>`).join('')}
+    </select>
+    ${!D.custId?`<div class="two" style="margin-top:8px">
+        <input id="oNewName" value="${esc(D.custNew)}" placeholder="Customer name *">
+        <input id="oNewMob" value="${esc(D.mobile)}" inputmode="numeric" placeholder="10 digit mobile *"
+          oninput="onlyNum(this,10);knownMobile(this.value)"></div>
+      <div class="see" id="oKnown" style="display:none;margin-top:8px"></div>
+      <select id="oNewType" style="margin-top:8px" onchange="keep();repriceAll();drawOrder()">${Object.keys(TYPES).map(k=>`<option value="${k}" ${D.type===k?'selected':''}>${TYPES[k]} (${k}-0001)</option>`).join('')}</select>`:''}
+
+    <label>Sold by</label>
+    <select id="oSeller" onchange="sellerPick(this.value)">
+      ${S.sellers.map(x=>`<option value="${x.id}" ${D.sellerId===x.id?'selected':''}>${esc(x.name)} · ${esc(x.code)}</option>`).join('')}
+      <option value="__new" ${D.addNewSeller?'selected':''}>＋ Add a new person…</option>
+    </select>
+    ${D.addNewSeller?`<div class="two" style="margin-top:8px"><input id="newSellerName" placeholder="Their name (e.g. your name)">
+      <button class="b g" id="addSellerBtn" onclick="addSellerInline()">Add person</button></div>`:''}
+
+    <label>Items <span class="req">*</span></label>
+    <div class="br" style="margin-bottom:8px">
+      ${S.products.map(pr=>`<button class="b gh s" onclick="addItem('${pr.id}')">＋ ${esc(pr.name)}</button>`).join('')}
+    </div>
+    ${D.items.length? D.items.map((i,x)=>{
+      const p=S.products.find(y=>y.id===i.pid), L=plist(p);
+      if(!p) return `<div class="ib over">
+        <div class="t"><div class="nm">❓ ${esc(i.name)}</div>
+          <input type="number" inputmode="decimal" value="${i.qty}" oninput="D.items[${x}].qty=+this.value||0;liveT()">
+          <button class="b gh s" onclick="keep();D.items.splice(${x},1);drawOrder()">✕</button></div>
+        <div class="p">
+          <select onchange="setItemProduce(${x},this.value)">
+            <option value="">— which produce is this? —</option>
+            ${S.products.map(pp=>`<option value="${pp.id}">${esc(pp.name)}</option>`).join('')}
+            <option value="__new">＋ Add "${esc(i.name)}" as new produce</option>
+          </select>
+          <input type="number" inputmode="decimal" value="${i.rate||''}" placeholder="₹ price"
+            oninput="D.items[${x}].rate=+this.value||0;liveT()">
+        </div>
+        <div class="stk bad">Pick a produce, or remove this line. It will not be saved as it is.</div>
+      </div>`;
+      const free=p?R(stockLeft(p.id)+(D.editId?(originalQty(D.editId,i.pid)):0)):0;
+      const over=p?R(i.qty-free):0;
+      return `<div class="ib${over>0?' over':''}">
+        <div class="t">
+          <div class="nm">${emo(i.name)} ${esc(i.name)}</div>
+          <input type="number" inputmode="decimal" value="${i.qty}" data-q="${x}"
+            oninput="D.items[${x}].qty=+this.value||0;liveT()">
+          <button class="b gh s" onclick="keep();D.items.splice(${x},1);drawOrder()">✕</button>
+        </div>
+        <div class="p">
+          <select onchange="pickRate(${x},this.value)">
+            ${L.map((pp,k)=>`<option value="${k}" ${!i.custom&&String(i.plabel||'').toLowerCase()===String(pp.label).toLowerCase()?'selected':''}>${esc(pp.label)} — ${money(pp.amt)}/${esc(i.unit)}</option>`).join('')}
+            <option value="__c" ${i.custom?'selected':''}>Other price…</option>
+          </select>
+          ${i.custom
+            ?`<input type="number" inputmode="decimal" value="${i.rate||''}" placeholder="₹ price"
+                oninput="D.items[${x}].rate=+this.value||0;liveT()">`
+            :`<div class="amt" data-amt="${x}">${money(i.qty*i.rate)}</div>`}
+        </div>
+        ${i.custom?`<div class="hint" data-cst="${x}">${i.qty} ${esc(i.unit)} × ${money(i.rate)} = <b>${money(i.qty*i.rate)}</b> · a one-off price, the price list is not changed</div>`:''}
+        <div data-stk="${x}">${stkLine(i,free)}</div>
+      </div>`;}).join('')
+      :'<div class="cs">Tap a produce above to add it.</div>'}
+    ${D.items.length?`<div class="hint">Prices come from Admin → Produce, prices &amp; stock. Change one here only for this order.</div>`:''}
+
+    <label>Date of order</label><input type="date" id="oDate" value="${D.orderDate}" onchange="keep();paintDeliv()">
+    <div class="note" id="oDeliv" style="margin-top:8px">🚚 <b>Expected delivery:</b> ${niceDate(estDeliv())}
+      <span style="color:var(--muted)"> (${S.farm.leadDays||2} days — change in Setup)</span></div>
+
+    <label>Delivery address <span class="req">*</span></label>
+    <div class="two"><input id="oPin" value="${esc(D.pincode)}" inputmode="numeric" maxlength="6" placeholder="6 digit pincode *" oninput="onlyNum(this,6)">
+      <input id="oCity" value="${esc(D.city)}" placeholder="City / town *"></div>
+    <input id="oAddr" value="${esc(D.address)}" placeholder="House / street / landmark (optional)" style="margin-top:8px">
+
+    <label>How is it going?</label>
+    <div class="br">
+      <button class="b ${D.ship==='free'?'g':'gh'}" onclick="keep();D.ship='free';drawOrder()">🏠 Free home delivery</button>
+      <button class="b ${D.ship==='paid'?'o':'gh'}" onclick="keep();D.ship='paid';if(!D.shipFee)D.shipFee=+S.farm.shipFee||0;drawOrder()">📦 Ship (add charges)</button>
+    </div>
+    ${D.ship==='paid'?`<input type="number" inputmode="decimal" id="oShipFee" value="${D.shipFee||''}" placeholder="Shipping charges ₹" style="margin-top:8px" oninput="D.shipFee=+this.value||0;liveT()">`:''}
+
+    <div id="oShort">${(()=>{ const sh=shortList(); return sh.length
+      ?`<div class="warn">⚠️ <b>Not enough stock</b> for ${sh.map(x=>esc(x.name)+' (short '+x.short+' '+esc(x.unit)+')').join(', ')}.
+          You can still save this order — just fix the stock in Admin so the numbers stay honest.</div>`:''; })()}</div>
+    <div class="tot"><div>Items${D.ship==='paid'?' + shipping':''}</div><div class="n" id="oTot">${money(grand())}</div></div>
+    <label class="chk"><input type="checkbox" id="oPaid" ${D.paid?'checked':''} onchange="D.paid=this.checked"> Paid now (cash / UPI)</label>
+    <button class="b o w" style="margin-top:14px" onclick="saveOrder()">Save order</button>`);
+}
+/* when editing an order, its own quantity is already taken out of stock,
+   so add it back before judging whether the new quantity fits */
+function originalQty(oid,pid){ const o=S.orders.find(x=>x.id===oid); if(!o) return 0;
+  return o.items.filter(i=>i.pid===pid).reduce((a,i)=>a+i.qty,0); }
+function shortList(){ if(!D) return [];
+  return D.items.map(i=>{ const p=S.products.find(x=>x.id===i.pid); if(!p) return null;
+      const free=R(stockLeft(p.id)+(D.editId?originalQty(D.editId,i.pid):0));
+      const short=R(i.qty-free);
+      return short>0?{name:p.name,unit:i.unit,short:short}:null; }).filter(Boolean); }
+function stkLine(i,free){
+  const over=R(i.qty-free);
+  return over>0
+    ? `<div class="stk bad">⚠️ Only ${free} ${esc(i.unit)} left — this order is ${over} ${esc(i.unit)} short. Add stock in Admin, or lower the quantity.</div>`
+    : `<div class="stk">${free} ${esc(i.unit)} in stock${free-i.qty<=0?' — this finishes it':''}</div>`;
+}
+function paintDeliv(){ const el=$('oDeliv'); if(!el||!D) return;
+  el.innerHTML=`🚚 <b>Expected delivery:</b> ${niceDate(estDeliv())}
+    <span style="color:var(--muted)"> (${S.farm.leadDays||2} days — change in Admin)</span>`; }
+/* updates the figures in place - never redraws, so a tap is never swallowed */
+function liveT(){
+  if(!D) return;
+  if($('oShipFee')) D.shipFee=nval('oShipFee');
+  D.items.forEach((i,x)=>{
+    const p=S.products.find(y=>y.id===i.pid);
+    const free=p?R(stockLeft(p.id)+(D.editId?originalQty(D.editId,i.pid):0)):0;
+    const a=document.querySelector('[data-amt="'+x+'"]'); if(a) a.textContent=money(i.qty*i.rate);
+    const c=document.querySelector('[data-cst="'+x+'"]');
+    if(c) c.innerHTML=`${i.qty} ${esc(i.unit)} × ${money(i.rate)} = <b>${money(i.qty*i.rate)}</b> · a one-off price, the price list is not changed`;
+    const st=document.querySelector('[data-stk="'+x+'"]'); if(st) st.innerHTML=stkLine(i,free);
+    const blk=st&&st.closest('.ib'); if(blk) blk.classList.toggle('over',R(i.qty-free)>0);
+  });
+  const sh=shortList(), box=$('oShort');
+  if(box) box.innerHTML = sh.length
+    ? `<div class="warn">⚠️ <b>Not enough stock</b> for ${sh.map(x=>esc(x.name)+' (short '+x.short+' '+esc(x.unit)+')').join(', ')}.
+        You can still save this order — just fix the stock in Admin so the numbers stay honest.</div>` : '';
+  if($('oTot')) $('oTot').textContent=money(grand());
+}
+function addItem(pid){ keep(); const pr=S.products.find(x=>x.id===pid);
+  const has=D.items.find(i=>i.pid===pid);
+  if(has){ has.qty=R(has.qty+1); }
+  else { const pk=pickPrice(pr,custType());
+    D.items.push({pid:pr.id,name:pr.name,qty:1,unit:pr.unit,rate:Number(pk.amt)||0,plabel:pk.label,custom:false}); }
+  drawOrder(); }
+function sellerPick(v){ keep(); if(v==='__new'){D.addNewSeller=true;} else {D.sellerId=v;D.addNewSeller=false;} drawOrder(); }
+function addSellerInline(){ keep(); const n=val('newSellerName'); if(!n){toast('Type a name');return;}
+  const sl={id:uid(),code:newSellerCode(n),name:n,mobile:''};
+  S.sellers.push(sl); D.sellerId=sl.id; D.addNewSeller=false; save(); toast('Added '+sl.code+' ✅'); drawOrder(); }
+
+/* pull name / mobile / pincode / total out of pasted or scanned text */
+function extractMeta(t){
+  const mob=((t.match(/(?:\+?91[\s-]?)?\b([6-9]\d{9})\b/)||[])[1])||'';
+  let pin=((t.match(/pin(?:code)?\s*[:\-]?\s*(\d{6})/i)||[])[1])||'';
+  if(!pin){ const c=t.match(/\b(\d{6})\b/g)||[]; pin=(c.find(x=>!mob.includes(x)))||''; }
+  let name=((t.match(/name\s*[:\-]\s*(.+)/i)||[])[1]||'').trim();
+  if(!name){
+    const bad=/\b(kg|gram|dozen|piece|box|crate|bundle|packet|total|amount|order|address|pincode|pin|delivery|rs|inr)\b/i;
+    for(const l of t.split(/\n/).map(x=>x.trim()).filter(Boolean)){
+      const w=l.replace(/[^A-Za-z ]/g,' ').trim();
+      if(w && !/\d/.test(l) && !bad.test(l) && w.split(/\s+/).length<=4 && w.length>2){ name=w; break; }
+    }
+  }
+  const tot=((t.match(/(?:total|amount|value|grand)\s*[:\-]?\s*(?:rs\.?|₹|inr)?\s*(\d[\d,]*)/i)||[])[1])||'';
+  return {mobile:mob,pincode:pin,name:name.slice(0,40),total:tot?Number(tot.replace(/,/g,'')):0};
+}
+function applyText(txt){
+  const found=parseWA(txt), meta=extractMeta(txt);
+  let unknown=0;
+  found.forEach(f=>{
+    if(!f.pid){                       /* not one of your produce - ask, don't invent */
+      D.items.push({pid:'',name:f.name,qty:f.qty,unit:f.unit,rate:0,plabel:'Typed',custom:true});
+      unknown++; return;
+    }
+    const has=D.items.find(i=>i.pid===f.pid);
+    if(has) has.qty=R(has.qty+f.qty);
+    else D.items.push({pid:f.pid,name:f.name,qty:f.qty,unit:f.unit,rate:f.rate||0,plabel:f.plabel||'Retail',custom:!!f.custom});
+  });
+  if(unknown) setTimeout(()=>toast(unknown+' line'+(unknown>1?'s':'')+' not recognised — pick the produce below'),1200);
+  repriceAll();
+  if(meta.mobile){
+    const ex=S.customers.find(c=>c.mobile===meta.mobile);
+    if(ex){ D.custId=ex.id; } else { D.mobile=meta.mobile; if(meta.name) D.custNew=meta.name; }
+  } else if(meta.name && !D.custId && !D.custNew) D.custNew=meta.name;
+  if(meta.pincode) D.pincode=meta.pincode;
+  D.note=txt.slice(0,600);
+  save(); drawOrder();
+  const bits=[];
+  if(found.length) bits.push(found.length+' item'+(found.length>1?'s':''));
+  if(meta.mobile) bits.push('mobile');
+  if(meta.name) bits.push('name');
+  if(meta.pincode) bits.push('pincode');
+  toast(bits.length?('Filled in: '+bits.join(', ')):'Nothing recognised — please type it in');
+  if(meta.total && Math.abs(meta.total-itemsSum())>1)
+    setTimeout(()=>toast('Message says total '+money(meta.total)+' — check the prices'),2400);
+}
+function readText(){ keep(); const t=val('waText'); if(!t){toast('Paste the message first');return;} applyText(t); }
+
+/* screenshot → text, in the browser */
+function loadScript(src){ return new Promise((res,rej)=>{const el=document.createElement('script');el.src=src;el.onload=res;el.onerror=()=>rej(new Error('load'));document.head.appendChild(el);}); }
+async function readShot(file){
+  if(!file) return;
+  keep();
+  const mine=orderRun;                       /* if the form is gone, stay gone */
+  const msg=$('shotMsg'); const set=t=>{ if($('shotMsg'))$('shotMsg').textContent=t; };
+  set('Reading the screenshot… this can take a few seconds.');
+  try{
+    if(typeof window.Tesseract==='undefined')
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.0/tesseract.min.js');
+    const out=await window.Tesseract.recognize(file,'eng',{logger:m=>{
+      if(m.status==='recognizing text') set('Reading the screenshot… '+Math.round((m.progress||0)*100)+'%');
+    }});
+    const txt=(out&&out.data&&out.data.text)||'';
+    if(!txt.trim()){ set('Could not read any text. Please type it in below.'); toast('No text found in that image'); return; }
+    if(mine!==orderRun || !mask.classList.contains('open')){ toast('Screenshot read, but the order was closed'); return; }
+    const box=$('waText'); if(box) box.value=txt;
+    set('Read it. Check the details below.');
+    applyText(txt);
+  }catch(e){
+    set('Screenshot reading is not available here — please paste the message text instead.');
+    toast('Could not read the screenshot');
+  }
+}
+
+function saveOrder(){
+  keep();
+  D.sellerId=($('oSeller')&&val('oSeller')!=='__new')?val('oSeller'):D.sellerId;
+
+  /* --- nothing is saved until the customer is properly identified --- */
+  const e={};
+  if(!D.custId){
+    e.oNewName = D.custNew ? '' : 'Customer name is needed';
+    e.oNewMob  = badMobile(D.mobile);
+  }
+  e.oCity = D.city ? '' : 'City or town is needed';
+  e.oPin  = badPin(D.pincode);
+  const clean=showErrs(e);
+  if(!D.items.length){ toast('Add at least one item'); return; }
+  if(D.items.some(i=>!i.pid)){ toast('One line has no produce chosen — pick it or remove it'); return; }
+  if(!clean){ toast('Please fill the boxes marked in red'); return; }
+
+  let cid=D.custId;
+  if(!cid){
+    const mob=digits(D.mobile);
+    const ex=S.customers.find(c=>c.mobile===mob);
+    if(ex){ cid=ex.id;
+      /* the number belongs to somebody we know - charge their band, not the
+         default retail one the form started on */
+      const before=D.items.map(i=>i.rate).join(',');
+      D.type=ex.code[0]||'R'; repriceAll();
+      if(D.items.map(i=>i.rate).join(',')!==before)
+        toast('Using '+ex.name+'\'s '+(TYPES[ex.code[0]]||'')+' prices');
+    }
+    else { const c={id:uid(),code:newCustCode(D.type||'R'),name:D.custNew,mobile:mob,
+        address:[D.address,D.city,D.pincode].filter(Boolean).join(', '),terms:0,sellerId:D.sellerId,byId:D.sellerId};
+      S.customers.push(c); cid=c.id; }
+  }
+  const ship=D.ship==='paid'?R(D.shipFee||0):0;
+  const body={date:D.orderDate||today(),deliveryDate:estDeliv(),custId:cid,sellerId:D.sellerId,
+    items:D.items.map(i=>{ const pr=S.products.find(x=>x.id===i.pid);
+      return {pid:i.pid,name:i.name,qty:R(i.qty),unit:i.unit,rate:R(i.rate),
+        plabel:i.plabel||'',custom:!!i.custom,
+        cost:(i.cost!==undefined&&i.cost!==null)?+i.cost:(pr?+pr.cost||0:0)}; }),
+    pincode:D.pincode,city:D.city,address:D.address,
+    shipMode:D.ship==='paid'?'Shipped':'Free home delivery', shipFee:ship, note:D.note||''};
+  if(D.editId){
+    const ex=S.orders.find(x=>x.id===D.editId);
+    if(!ex){ toast('That order was removed on another phone'); shut(); render(); return; }
+    Object.assign(ex,body);
+    const had=ex.payId && S.payments.find(x=>x.id===ex.payId);
+    if(D.paid){
+      if(had){ had.amount=oTotal(ex); had.date=ex.date; }        /* keep it in step */
+      else { const pay={id:uid(),date:ex.date,custId:cid,amount:oTotal(ex),mode:'Cash',byId:ex.sellerId};
+        S.payments.push(pay); ex.payId=pay.id; ex.status='Delivered'; }
+    } else if(had){
+      killRec(had.id); S.payments=S.payments.filter(x=>x.id!==had.id); ex.payId='';
+    }
+    save(); shut(); toast('Order updated ✅'); render(); return;
+  }
+  const o=Object.assign({id:uid(),code:newOrderCode(),status:D.paid?'Delivered':'Pending'},body);
+  S.orders.push(o);
+  if(D.paid){ const pay={id:uid(),date:o.date,custId:cid,amount:oTotal(o),mode:'Cash',byId:o.sellerId};
+    S.payments.push(pay); o.payId=pay.id; }
+  save();shut();toast('Order saved ✅');go('orders');
+}
+function mOrderView(id){
+  const o=S.orders.find(x=>x.id===id), c=S.customers.find(x=>x.id===o.custId)||{}, s=S.sellers.find(x=>x.id===o.sellerId);
+  openSheet(head(esc(o.code), `${esc(c.name||'')} · ${esc(c.code||'')}${s?' · sold by '+esc(s.name):''}`)+`
+    <div class="card" style="box-shadow:none;border:1px solid var(--line)">
+      ${o.items.map(i=>`<div class="row"><div class="m"><b>${emo(i.name)} ${esc(i.name)}</b><span>${i.qty} ${esc(i.unit)} × ${money(i.rate)}</span></div>
+        <div class="e"><b class="n">${money(i.qty*i.rate)}</b></div></div>`).join('')}
+      ${o.shipFee?`<div class="row"><div class="m"><b>📦 Shipping</b><span>${esc(o.shipMode||'')}</span></div><div class="e"><b class="n">${money(o.shipFee)}</b></div></div>`:''}
+      <div class="tot"><div>Total</div><div class="n">${money(oTotal(o))}</div></div></div>
+    <table class="tb" style="margin-top:11px">
+      <tr><td>Ordered on</td><td class="r">${niceDate(o.date)}</td></tr>
+      <tr><td>Expected delivery</td><td class="r">${o.deliveryDate?niceDate(o.deliveryDate):'—'}</td></tr>
+      <tr><td>Delivery</td><td class="r">${esc(o.shipMode||'Free home delivery')}</td></tr>
+      <tr><td>Address</td><td class="r">${esc([o.address,o.city,o.pincode].filter(Boolean).join(', ')||c.address||'—')}</td></tr>
+    </table>
+    ${notSaved(o)?`<div class="note" style="margin-top:10px">● <b>Not in the Google Sheet yet.</b>
+      It is safe on this phone and uploads on its own — don't close the window until the top says
+      <b>All changes saved</b>.</div>`:''}
+    ${o.note?`<div class="note" style="margin-top:10px"><b>Original message:</b><br>${esc(o.note)}</div>`:''}
+    <div class="br" style="margin-top:13px">
+      <button class="b o" onclick="invoicePDF('${o.id}',true)">📤 Share bill</button>
+      <button class="b gh" onclick="invoicePDF('${o.id}',false)">⬇ Bill PDF</button>
+      <button class="b gh" onclick="mOrder('${o.id}')">✏️ Edit order</button>
+      ${o.status==='Pending'?`<button class="b g" onclick="setStatus('${o.id}','Delivered')">Mark delivered</button>`:''}
+      ${o.status!=='Cancelled'?`<button class="b gh" onclick="mPayment('${c.id}')">Take payment</button>`:''}
+      ${o.status!=='Cancelled'?`<button class="b gh" style="color:var(--red)" onclick="setStatus('${o.id}','Cancelled')">Cancel order</button>`:''}
+    </div>`);
+}
+function setStatus(id,st){const o=S.orders.find(x=>x.id===id);o.status=st;save();shut();toast('Order '+st.toLowerCase());render();}
+
+/* --- payment / expense --- */
+function mPayment(cid){
+  openSheet(head('Money received','From a customer')+`
+    <label>Customer</label><select id="pCust">${S.customers.map(c=>`<option value="${c.id}" ${cid===c.id?'selected':''}>${esc(c.code)} · ${esc(c.name)} — ${money(dues(c.id))} due</option>`).join('')}</select>
+    <label>Amount ₹</label><input id="pAmt" type="number" inputmode="decimal" value="${cid?Math.max(0,dues(cid)):''}">
+    <label>How</label><select id="pMode">${['Cash','UPI','Bank transfer','Cheque'].map(m=>`<option>${m}</option>`).join('')}</select>
+    ${byPicker('pBy','Received by')}
+    <button class="b g w" style="margin-top:14px" onclick="savePayment()">Save payment</button>`);
+}
+function savePayment(){const c=val('pCust'),a=nval('pAmt');if(!c){toast('Pick a customer');return;}if(a<=0){toast('Enter the amount');return;}
+  if(!val('pBy')){toast('Pick who received the money');return;}
+  if(!once('pay|'+c+'|'+a)){ shut(); return; }
+  S.payments.push({id:uid(),date:today(),custId:c,amount:R(a),mode:val('pMode'),byId:val('pBy')});save();shut();toast('Payment saved ✅');render();}
+function mExpense(){
+  openSheet(head('Add expense','Money you spent')+`
+    <label>Amount ₹</label><input id="eAmt" type="number" inputmode="decimal">
+    <label>What for</label><select id="eCat">${EXPCATS.map(c=>`<option>${c}</option>`).join('')}</select>
+    <label>Paid by</label><select id="eMode">${['Cash','UPI','Bank transfer'].map(m=>`<option>${m}</option>`).join('')}</select>
+    <label>Note (optional)</label><input id="eNote">
+    ${byPicker('eBy','Spent by')}
+    <button class="b o w" style="margin-top:14px" onclick="saveExpense()">Save expense</button>`);
+}
+function saveExpense(){const a=nval('eAmt');if(a<=0){toast('Enter the amount');return;}
+  if(!val('eBy')){toast('Pick who spent it');return;}
+  if(!once('exp|'+val('eCat')+'|'+a)){ shut(); return; }
+  S.expenses.push({id:uid(),date:today(),amount:R(a),cat:val('eCat'),mode:val('eMode'),note:val('eNote'),byId:val('eBy')});save();shut();toast('Expense saved ✅');render();}
+
+/* --- ledger + reminder --- */
+function mLedger(cid){
+  const c=S.customers.find(x=>x.id===cid);
+  const rows=[]; S.orders.filter(o=>o.custId===cid&&o.status!=='Cancelled').forEach(o=>rows.push({d:o.date,t:o.code+' (order)',dr:oTotal(o),cr:0}));
+  S.payments.filter(p=>p.custId===cid).forEach(p=>rows.push({d:p.date,t:'Payment · '+p.mode,dr:0,cr:p.amount,pid:p.id}));
+  rows.sort((a,b)=>a.d<b.d?-1:1); let run=0;
+  openSheet(head(esc(c.name), `${esc(c.code)} · ${TYPES[c.code[0]]||''} · ${esc(c.mobile||'')}`)+`
+    <div class="sx"><table class="tb"><tr><th>Date</th><th>What</th><th class="r">Billed</th><th class="r">Paid</th><th class="r">Balance</th></tr>
+      ${rows.length?rows.map(r=>{run+=r.dr-r.cr;return `<tr><td>${r.d.slice(5)}</td><td>${esc(r.t)}${r.pid?` <button class="b gh" style="padding:1px 6px;font-size:10px" onclick="receiptPDF('${r.pid}',true)">receipt</button>`:''}</td><td class="r n">${r.dr?money(r.dr):''}</td><td class="r n">${r.cr?money(r.cr):''}</td><td class="r n">${money(run)}</td></tr>`;}).join('')
+        :'<tr><td colspan="5" style="color:var(--muted)">No transactions yet.</td></tr>'}
+      <tr><td colspan="4"><b>Still to pay</b></td><td class="r n"><b>${money(dues(cid))}</b></td></tr></table></div>
+    <div class="br" style="margin-top:13px"><button class="b wa" onclick="remind('${cid}')">Remind on WhatsApp</button>
+      <button class="b g" onclick="mPayment('${cid}')">Got money</button></div>`);
+}
+function remind(cid){
+  const c=S.customers.find(x=>x.id===cid), d=dues(cid), farm=S.farm.name||'our farm';
+  let m=`Namaste ${c.name},\n\n${money(d)} is pending against your account (${c.code}).`;
+  if(S.farm.upi) m+=`\n\nYou can pay by UPI: ${S.farm.upi}`;
+  m+=`\n\nThank you,\n${farm}`;
+  const ph=(c.mobile||'').replace(/\D/g,'');
+  window.open('https://wa.me/'+(ph?(ph.length===10?'91':'')+ph:'')+'?text='+encodeURIComponent(m),'_blank');
+}
+
+/* --- connector help --- */
+function mConnector(){
+  const code=`/*  FarmBook <-> Google Sheet  (two-way)
+
+    doPost : a phone sends everything it has. The Sheet merges it into
+             the master copy and rewrites the readable tabs.
+    doGet  : a phone asks for the merged master copy back.
+
+    The master copy is JSON in a hidden tab called _data. The other
+    tabs are for you to READ. Typing into them does not come back into
+    the app - change things in the app's Admin screen instead.
+
+    Which change wins: every record carries the time it last changed,
+    and for that record the later change wins. Deletions are kept in a
+    list of their own so a deleted item cannot come back to life.       */
+
+var LISTS = ['customers','sellers','products','orders','payments','expenses','stockLogs'];
+var BLOB  = '_data';
+var TAB_GAP = 180000;      /* rewrite the readable tabs at most once every 3 minutes */
+var SV = 0;                /* the Sheet's own counter - see sliceSince_ */
+var VER = 3;               /* the app checks this, so it can tell you when
+                              an older copy of this file is still installed */
+
+function doPost(e){
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try{
+    var body0 = JSON.parse(e.postData.contents);
+    var inc = body0.data || {};
+    var ss  = SpreadsheetApp.getActive();
+    var out = merge_(readBlob_(ss), inc);
+
+    /* The phones read the master copy, not the tabs, so the tabs do not
+       have to be rewritten on every single sync. Rewriting them is by far
+       the slowest part - throttling it is what lets ten phones share one
+       Sheet without running out of Google's daily script time. */
+    var now = Date.now();
+    if(now - Number(out._tw||0) > TAB_GAP){ out._tw = now; out._dirty = false; writeTabs_(ss,out); }
+    else out._dirty = true;
+
+    writeBlob_(ss, out);
+
+    /* Reply with the merged answer, so one round trip does the whole job.
+       Older phones that cannot read this reply just ignore it and ask
+       again with doGet - both ways work. */
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok:true, v:VER, since:Number(body0.since)||0,
+                                         data: sliceSince_(out, Number(body0.since)||0) }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }catch(err){
+    return ContentService.createTextOutput('error: '+err);
+  }finally{
+    lock.releaseLock();
+  }
+}
+
+function doGet(e){
+  var out;
+  try{
+    var ss    = SpreadsheetApp.getActive();
+    var since = Number(e && e.parameter && e.parameter.since) || 0;
+    var d     = readBlob_(ss);
+
+    /* Bring the readable tabs up to date - either because the app asked
+       outright, or because a change is waiting and the quiet period has
+       passed. Without this second case the LAST change of the day could
+       sit in the master copy and never reach the tabs, because only a new
+       send used to trigger the rewrite. */
+    var wantNow  = !!(e && e.parameter && e.parameter.tabs);
+    var overdue  = d._dirty && (Date.now() - Number(d._tw||0) > TAB_GAP);
+    if(wantNow || overdue){
+      var lk = LockService.getScriptLock();
+      if(lk.tryLock(wantNow ? 25000 : 5000)){
+        try{
+          d = readBlob_(ss);                 /* pick up anything that landed meanwhile */
+          d._tw = Date.now(); d._dirty = false;
+          writeTabs_(ss,d); writeBlob_(ss,d);
+        } finally{ lk.releaseLock(); }
+      }
+    }
+
+    out = JSON.stringify({ ok:true, v:VER, since:since, data: sliceSince_(d, since) });
+  }catch(err){
+    out = JSON.stringify({ ok:false, error:String(err) });
+  }
+  var cb = e && e.parameter && e.parameter.callback;
+  if(cb) return ContentService.createTextOutput(cb+'('+out+');')
+          .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  return ContentService.createTextOutput(out).setMimeType(ContentService.MimeType.JSON);
+}
+
+/* ---------- the master copy, split over rows because one cell
+              only holds 50,000 characters ---------- */
+function readBlob_(ss){
+  var sh = ss.getSheetByName(BLOB);
+  if(!sh) return {};
+  var last = sh.getLastRow();
+  if(!last) return {};
+  var v = sh.getRange(1,1,last,1).getValues(), t = '';
+  for(var i=0;i<v.length;i++) t += norm_(v[i][0]);
+  if(!t) return {};
+  try{ return JSON.parse(t); }
+  catch(err){
+    /* Something damaged the master copy. Do NOT pretend the Sheet is empty
+       - that would let the next phone overwrite everybody's data with its
+       own. Stop, and keep the damaged copy for recovery. */
+    throw new Error('The _data tab is damaged and could not be read. '
+      + 'Nothing was changed. Restore the Sheet from File > Version history.');
+  }
+}
+function writeBlob_(ss,d){
+  var sh = ss.getSheetByName(BLOB) || ss.insertSheet(BLOB);
+  var t = JSON.stringify(d), N = 45000, rows = [], at = 0;
+  while(at < t.length){
+    var take = Math.min(N, t.length-at);
+    /* never let the NEXT chunk start with a character Sheets would read
+       as a formula, or the master copy comes back corrupted */
+    while(take > 1 && at+take < t.length && '=+-@'.indexOf(t.charAt(at+take)) >= 0) take--;
+    rows.push([t.substr(at,take)]);
+    at += take;
+  }
+  if(!rows.length) rows = [['']];
+  sh.clear();
+  sh.getRange(1,1,rows.length,1).setValues(rows);
+  try{ sh.hideSheet(); }catch(err){}
+}
+
+/* Only what changed since this phone last heard from us.
+
+   This counts with the SHEET'S own counter (sv), not with the phones'
+   clocks. Phone clocks disagree, and orders do not arrive in clock order:
+   a phone that had already heard "everything up to 10:05" would never be
+   sent an order another phone stamped 10:04 but delivered later. The
+   Sheet's counter only ever goes up, and it is the same counter for
+   everybody, so nothing can slip behind it. */
+function sliceSince_(d,since){
+  var body = { tomb:d.tomb||{}, seq:d.seq||{}, farmU:0, svMax:Number(d.sv||0),
+               tabsAt:Number(d._tw||0), tabsWaiting:!!d._dirty };
+  for(var i=0;i<LISTS.length;i++){
+    var key = LISTS[i], src = d[key] || [], keep = [];
+    for(var r=0;r<src.length;r++) if(Number(src[r].sv||0) > since) keep.push(src[r]);
+    if(keep.length) body[key] = keep;
+  }
+  if(Number(d.farmSv||0) > since){ body.farm=d.farm||{}; body.budgets=d.budgets||{};
+    body.farmV=d.farmV||{}; body.farmU=Number(d.farmU||0); }
+  return body;
+}
+
+/* ---------- the merge ---------- */
+function merge_(a,b){
+  var out = {}, k;
+  SV = Number(a.sv||0);
+  var tomb = {};
+  var t1 = a.tomb || {}, t2 = b.tomb || {};
+  for(k in t1) tomb[k] = Number(t1[k])||0;
+  for(k in t2) if(!tomb[k] || Number(t2[k])>tomb[k]) tomb[k] = Number(t2[k])||0;
+
+  for(var i=0;i<LISTS.length;i++){
+    var key = LISTS[i];
+    out[key] = mergeList_(a[key]||[], b[key]||[], tomb);
+  }
+  out.tomb = tomb;
+
+  /* Settings merge FIELD BY FIELD. Taking the whole block from whoever
+     saved last meant one person typing a farm name could wipe the Admin
+     code everybody else relied on. */
+  var FARM_KEYS = ['name','mobile','upi','leadDays','shipFee','pin'];
+  var au = Number(a.farmU||0), bu = Number(b.farmU||0);
+  var av = a.farmV||{}, bv = b.farmV||{};
+  out.farm = {}; out.farmV = {};
+  for(var fk=0; fk<FARM_KEYS.length; fk++){
+    var key = FARM_KEYS[fk];
+    var aHas = a.farm && a.farm[key]!==undefined && av[key]!==undefined;
+    var bHas = b.farm && b.farm[key]!==undefined && bv[key]!==undefined;
+    var at = aHas ? Number(av[key]) : -1;
+    var bt = bHas ? Number(bv[key]) : -1;
+    if(bHas && (!aHas || bt >= at)){ out.farm[key] = b.farm[key]; out.farmV[key] = bt; }
+    else if(aHas){ out.farm[key] = a.farm[key]; out.farmV[key] = at; }
+    else if(a.farm && a.farm[key]!==undefined){ out.farm[key] = a.farm[key]; }
+  }
+  var abt = (av.budgets!==undefined) ? Number(av.budgets) : -1;
+  var bbt = (bv.budgets!==undefined) ? Number(bv.budgets) : -1;
+  if(b.budgets && bbt >= 0 && bbt >= abt){ out.budgets = b.budgets; out.farmV.budgets = bbt; }
+  else { out.budgets = a.budgets || {}; if(abt >= 0) out.farmV.budgets = abt; }
+  out.farmU   = Math.max(au,bu);
+  out.seq     = maxSeq_(a.seq, b.seq);
+  out.seeded  = true;
+  out._tw     = Number(a._tw||0);
+  out._dirty  = !!a._dirty;
+  out.farmSv  = Number(a.farmSv||0);
+  if(out.farmU !== Number(a.farmU||0)) out.farmSv = ++SV;
+  renumber_(out);
+  out.sv = SV;
+  return out;
+}
+
+/* Two phones offline at the same time can both mint ORD-0001 or R-0001.
+   The Sheet is the only place that sees everybody, so it is the only
+   place that can settle it: whoever created theirs first keeps the
+   number, the other gets the next free one, and the corrected number
+   travels back to every phone. */
+function pad_(n,w){ n=String(n); while(n.length<w) n='0'+n; return n; }
+/* the same "first one keeps it, the rest are re-issued" rule, for a
+   numbered field that is not the record's own code */
+function fixNum_(rows,field,prefix,seqKey,width,seq){
+  if(!rows || !rows.length) return;
+  rows.sort(function(m,n){ return (Number(m.u||0))-(Number(n.u||0)); });
+  var used = {}, i, r, num, now = Date.now();
+  for(i=0;i<rows.length;i++){
+    r = rows[i];
+    if(r[field] && !used[r[field]]){
+      used[r[field]] = true;
+      num = Number(String(r[field]).split('-').pop()) || 0;
+      if(num > (Number(seq[seqKey])||0)) seq[seqKey] = num;
+    }
+  }
+  for(i=0;i<rows.length;i++){
+    r = rows[i];
+    if(!r[field] || used['@'+r[field]]){
+      seq[seqKey] = (Number(seq[seqKey])||0) + 1;
+      r[field] = prefix + '-' + pad_(seq[seqKey], width);
+      r.u = Math.max(Number(r.u||0) + 1, now); r.sv = ++SV;
+      used[r[field]] = true;
+    }
+    used['@'+r[field]] = true;
+  }
+}
+function renumber_(out){
+  var seq = out.seq || {}, now = Date.now();
+
+  function fix(list, prefixOf, seqKey, width, joiner){
+    if(!list || !list.length) return;
+    var rows = list.slice().sort(function(m,n){ return (Number(m.u||0))-(Number(n.u||0)); });
+    var used = {}, i, r, pre, num;
+    for(i=0;i<rows.length;i++){                       /* keep what is already unique */
+      r = rows[i]; pre = prefixOf(r);
+      if(r.code && !used[r.code]){
+        used[r.code] = true;
+        num = Number(String(r.code).split('-').pop()) || 0;
+        var k1 = seqKey(pre);
+        if(num > (Number(seq[k1])||0)) seq[k1] = num;
+      }
+    }
+    for(i=0;i<rows.length;i++){                       /* then settle the clashes */
+      r = rows[i]; pre = prefixOf(r);
+      var k2 = seqKey(pre);
+      if(!r.code || used[r.code] !== true || used['@'+r.code]){
+        seq[k2] = (Number(seq[k2])||0) + 1;
+        r.code = pre + joiner + pad_(seq[k2], width);
+        r.u = Math.max(Number(r.u||0) + 1, now);   /* never behind the phone's own clock */
+        r.sv = ++SV;
+        used[r.code] = true;
+      }
+      used['@'+r.code] = true;                        /* this id has now claimed it */
+    }
+  }
+
+  fix(out.customers,
+      function(c){ var t=String(c.code||'R').charAt(0); return 'RWHC'.indexOf(t)<0 ? 'R' : t; },
+      function(pre){ return pre; }, 4, '-');
+
+  fix(out.orders,  function(){ return 'ORD'; },    function(){ return 'order'; }, 4, '-');
+
+  /* bill and receipt numbers are printed for customers - they must be unique */
+  var withInv = [];
+  for(var oi=0; oi<(out.orders||[]).length; oi++) if(out.orders[oi].invNo) withInv.push(out.orders[oi]);
+  fixNum_(withInv, 'invNo', 'INV', 'inv', 4, seq);
+  var withRcp = [];
+  for(var pi=0; pi<(out.payments||[]).length; pi++) if(out.payments[pi].rcpNo) withRcp.push(out.payments[pi]);
+  fixNum_(withRcp, 'rcpNo', 'RCP', 'rcp', 4, seq);
+  fix(out.sellers, function(s){ return String(s.code||'person').split('-')[0]; },
+      function(){ return 'person'; }, 3, '-');
+
+  out.seq = seq;
+}
+function mergeList_(x,y,tomb){
+  var map = {}, order = [], was = {}, now = Date.now();
+  function add(r){
+    if(!r || !r.id) return;
+    if(!r.u) r.u = now;                                              /* never leave one unstamped */
+    if(tomb[r.id] && Number(tomb[r.id]) >= Number(r.u||0)) return;   /* deleted */
+    if(!map[r.id]){ map[r.id] = r; order.push(r.id); }
+    else if(Number(r.u||0) > Number(map[r.id].u||0)) map[r.id] = r;  /* newer wins */
+  }
+  for(var i=0;i<x.length;i++){ was[x[i].id] = x[i]; add(x[i]); }
+  for(var j=0;j<y.length;j++) add(y[j]);
+  var out = [];
+  for(var q=0;q<order.length;q++){
+    var id = order[q], win = map[id], old = was[id];
+    /* only a record that actually moved gets a new counter value, so phones
+       are not made to re-download the whole book on every sync */
+    if(!old || Number(old.u||0) !== Number(win.u||0) || !win.sv) win.sv = ++SV;
+    out.push(win);
+  }
+  return out;
+}
+function maxSeq_(a,b){
+  a = a||{}; b = b||{};
+  var o = {}, k;
+  for(k in a) o[k] = Number(a[k])||0;
+  for(k in b) o[k] = Math.max(o[k]||0, Number(b[k])||0);
+  return o;
+}
+
+/* ---------- the tabs you read ---------- */
+function writeTabs_(ss,d){
+  function nm_(id){ for(var i=0;i<(d.sellers||[]).length;i++) if(d.sellers[i].id===id) return d.sellers[i].name; return ''; }
+  function cd_(id){ for(var i=0;i<(d.sellers||[]).length;i++) if(d.sellers[i].id===id) return d.sellers[i].code; return ''; }
+
+  upsert_(ss,'Customers',['ID','Cust ID','Name','Mobile','Type','Address','Added by'],
+    (d.customers||[]).map(function(c){
+      return [c.id,c.code,c.name,c.mobile||'',(c.code||'').charAt(0),c.address||'',nm_(c.byId||c.sellerId)]; }));
+
+  upsert_(ss,'SalesPeople',['ID','Person ID','Name','Mobile'],
+    (d.sellers||[]).map(function(s){ return [s.id,s.code,s.name,s.mobile||'']; }));
+
+  upsert_(ss,'Produce',['ID','Name','Unit','Price list','Retail price','Wholesale price','Cost','Stock brought in','Low stock alert'],
+    (d.products||[]).map(function(p){
+      var L = (p.prices && p.prices.length) ? p.prices : [{label:'Retail',amt:p.rate||0}];
+      function amt(nm){ for(var i=0;i<L.length;i++) if(String(L[i].label).toLowerCase()===nm) return L[i].amt; return ''; }
+      var txt = L.map(function(x){ return x.label+' '+x.amt; }).join(' | ');
+      return [p.id,p.name,p.unit,txt,amt('retail'),amt('wholesale'),p.cost,p.stock,p.low]; }));
+
+  var orows = [];
+  (d.orders||[]).forEach(function(o){
+    var c = byId_(d.customers||[],o.custId), s = byId_(d.sellers||[],o.sellerId);
+    (o.items||[]).forEach(function(it,j){
+      orows.push([o.id+'#'+j, o.code, o.date, o.deliveryDate||'', o.invNo||'',
+        c.code||'', c.name||'', c.mobile||'', s.name||'', s.code||'',
+        it.name, it.qty, it.unit, it.rate, (it.custom?'Typed':(it.plabel||'')), it.qty*it.rate,
+        o.shipMode||'', o.shipFee||0, o.pincode||'', o.city||'', o.address||'', o.status]);
+    });
+  });
+  upsert_(ss,'Orders',['ID','Order','Order date','Expected delivery','Bill no',
+    'Cust ID','Customer','Mobile','Sold by','Sold by ID',
+    'Item','Qty','Unit','Price','Price used','Amount',
+    'Delivery','Shipping','Pincode','City','Address','Status'], orows);
+
+  upsert_(ss,'Payments',['ID','Receipt no','Date','Cust ID','Customer','Amount','Mode','Received by','Person ID'],
+    (d.payments||[]).map(function(p){ var c=byId_(d.customers||[],p.custId);
+      return [p.id,p.rcpNo||'',p.date,c.code||'',c.name||'',p.amount,p.mode,nm_(p.byId),cd_(p.byId)]; }));
+
+  upsert_(ss,'Expenses',['ID','Date','Category','Amount','Mode','Note','Spent by','Person ID'],
+    (d.expenses||[]).map(function(x){ return [x.id,x.date,x.cat,x.amount,x.mode,x.note||'',nm_(x.byId),cd_(x.byId)]; }));
+
+  /* A live "what is left right now" tab, worked out the same way the app
+     does it: everything brought in, minus delivered, minus promised. */
+  var qty_ = function(pid,status){
+    var t = 0;
+    (d.orders||[]).forEach(function(o){
+      if(status ? o.status!==status : o.status==='Cancelled') return;
+      (o.items||[]).forEach(function(it){ if(it.pid===pid) t += Number(it.qty)||0; });
+    });
+    return Math.round(t*100)/100;
+  };
+  upsert_(ss,'Stock Now',['ID','Produce','Unit','Brought in','Delivered','In godown',
+                          'Promised (not delivered)','FREE TO SELL','Low stock alert','Cost each','Value of free stock'],
+    (d.products||[]).map(function(p){
+      var inn = Number(p.stock)||0,
+          del = qty_(p.id,'Delivered'),
+          pro = qty_(p.id,'Pending'),
+          god = Math.round((inn-del)*100)/100,
+          free= Math.round((inn-del-pro)*100)/100;
+      return [p.id, p.name, p.unit, inn, del, god, pro, free,
+              (p.low==null?10:p.low), p.cost||0,
+              Math.round(Math.max(0,free)*(Number(p.cost)||0)*100)/100]; }));
+
+  upsert_(ss,'Stock',['ID','Date','Produce','Change','Unit','What happened','Why','Note','Recorded by'],
+    (d.stockLogs||[]).map(function(g){
+      return [g.id,g.date,g.name,g.qty,g.unit||'',g.kind||'',g.why||'',g.note||'',nm_(g.byId)||g.who||'']; }));
+}
+
+function byId_(list,id){
+  for(var i=0;i<list.length;i++) if(list[i].id===id) return list[i];
+  return {};
+}
+/* Adds new rows, updates changed ones, and clears rows that are gone.
+   Matches on the ID in column A. Do not delete or re-order column A. */
+function norm_(v){
+  if(v instanceof Date){
+    var p=function(n){ return (n<10?'0':'')+n; };
+    return v.getFullYear()+'-'+p(v.getMonth()+1)+'-'+p(v.getDate());
+  }
+  return String(v===null||v===undefined ? '' : v);
+}
+function sameRow_(a,b){
+  if(a.length!==b.length) return false;
+  for(var i=0;i<a.length;i++) if(norm_(a[i])!==norm_(b[i])) return false;
+  return true;
+}
+function upsert_(ss,name,head,rows){
+  var sh = ss.getSheetByName(name) || ss.insertSheet(name);
+  if(sh.getLastRow()===0){
+    sh.getRange(1,1,1,head.length).setValues([head]).setFontWeight('bold');
+    sh.setFrozenRows(1);
+  } else {
+    /* an upgrade may add columns - keep the header honest */
+    var cur0 = sh.getRange(1,1,1,head.length).getValues()[0];
+    if(!sameRow_(cur0, head)) sh.getRange(1,1,1,head.length).setValues([head]).setFontWeight('bold');
+  }
+  var keep = {};
+  for(var r=0;r<rows.length;r++) keep[String(rows[r][0])] = rows[r];
+
+  var last = sh.getLastRow(), seen = {};
+  if(last>1){
+    var cur = sh.getRange(2,1,last-1,head.length).getValues();
+    var blank = [];
+    for(var i=0;i<head.length;i++) blank.push('');
+    for(var c=0;c<cur.length;c++){
+      var k = String(cur[c][0]);
+      if(k==='') continue;
+      if(keep.hasOwnProperty(k)){
+        seen[k] = true;
+        if(!sameRow_(cur[c], keep[k]))
+          sh.getRange(c+2,1,1,head.length).setValues([keep[k]]);
+      }else{
+        sh.getRange(c+2,1,1,head.length).setValues([blank]);   /* deleted elsewhere */
+      }
+    }
+  }
+  var add = [];
+  for(var r2=0;r2<rows.length;r2++) if(!seen[String(rows[r2][0])]) add.push(rows[r2]);
+  if(add.length) sh.getRange(sh.getLastRow()+1,1,add.length,head.length).setValues(add);
+}`;
+  openSheet(head('Link a Google Sheet','One-time, about 3 minutes')+`
+    <div class="note">This is optional. Without it the app still works fully — it just saves on this phone only.</div>
+    <ol style="padding-left:20px;font-size:13.5px;line-height:1.7;margin:12px 0">
+      <li>Open <b>drive.google.com</b> → New → <b>Google Sheets</b>. Name it e.g. "Farm Book Data".</li>
+      <li>In that sheet: <b>Extensions → Apps Script</b>.</li>
+      <li>Delete what's there, paste the code below.</li>
+      <li><b>Deploy → New deployment</b>, gear → <b>Web app</b>.<br>
+          Execute as <b>Me</b>, access <b>Anyone</b>. Deploy, then Allow.</li>
+      <li>Copy the link it gives you — it ends in <b>/exec</b>.</li>
+      <li>Paste it into the box on the Setup screen and tap <b>Save &amp; sync now</b>.</li>
+      <li><b>Only you do this, once.</b> To hand it to your team, use
+          "Give this to your team" on the Setup screen.</li>
+    </ol>
+    <button class="b g w" onclick="copyCode()">📋 Copy the code</button>
+    <code class="sn" id="snip">${esc(code)}</code>`);
+  window.__code=code;
+}
+function copySheetLink(){ const t=S.sheetUrl||'';
+  if(!t){toast('No Sheet linked yet');return;}
+  if(navigator.clipboard){navigator.clipboard.writeText(t).then(()=>toast('Link copied ✅'),()=>toast('Copy it from the box above'));}
+  else toast('Copy it from the box above'); }
+function copyCode(){ const t=window.__code||'';
+  if(navigator.clipboard){navigator.clipboard.writeText(t).then(()=>toast('Code copied ✅'),()=>toast('Select the code and copy'));}
+  else toast('Select the code and copy'); }
+
+
+/* ═══════════════ 10a. INVOICE & RECEIPT PDFs  (jsPDF, MIT licence) ═══════════════ */
+async function jsPDFready(){
+  if(!window.jspdf) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  if(!window.jspdf || !window.jspdf.jsPDF) throw new Error('pdf-unavailable');
+  return window.jspdf.jsPDF;
+}
+/* Bill / receipt numbers are assigned once and never change or repeat. */
+function invNoFor(o){ if(!o.invNo){ S.seq.inv=(S.seq.inv||0)+1; o.invNo='INV-'+pad(S.seq.inv,4); save(); } return o.invNo; }
+function rcpNoFor(pm){ if(!pm.rcpNo){ S.seq.rcp=(S.seq.rcp||0)+1; pm.rcpNo='RCP-'+pad(S.seq.rcp,4); save(); } return pm.rcpNo; }
+
+const GRN=[31,138,76], ORG=[214,106,6], GRY=[122,122,112], DRK=[35,38,31], LINE_=[232,232,224];
+/* jsPDF's built-in font has no rupee glyph, so bills print "Rs". */
+const rs=n=>'Rs '+Math.round(Number(n)||0).toLocaleString('en-IN');
+
+function pdfHead(d,title,right){
+  d.setFont('helvetica','bold'); d.setFontSize(17); d.setTextColor.apply(d,GRN);
+  d.text(S.farm.name||'My Farm',14,20);
+  d.setFont('helvetica','normal'); d.setFontSize(9); d.setTextColor.apply(d,GRY);
+  let y=26;
+  if(S.farm.mobile){ d.text('Mobile: '+S.farm.mobile,14,y); y+=4.6; }
+  if(S.farm.upi){ d.text('UPI: '+S.farm.upi,14,y); y+=4.6; }
+  d.setFont('helvetica','bold'); d.setFontSize(15); d.setTextColor.apply(d,DRK);
+  d.text(title,196,20,{align:'right'});
+  d.setFont('helvetica','normal'); d.setFontSize(9.5); d.setTextColor.apply(d,GRY);
+  let ry=26; right.filter(Boolean).forEach(t=>{ d.text(t,196,ry,{align:'right'}); ry+=4.6; });
+  const top=Math.max(y,ry)+3;
+  d.setDrawColor.apply(d,LINE_); d.setLineWidth(.5); d.line(14,top,196,top);
+  return top+9;
+}
+function pdfFoot(d,isReceipt){
+  d.setFont('helvetica','normal'); d.setFontSize(8.5); d.setTextColor.apply(d,GRY);
+  if(!isReceipt) d.text('This is not a GST invoice.',14,284);
+  d.text('Thank you for your business.',196,284,{align:'right'});
+}
+
+async function invoicePDF(orderId,share){
+  let d;
+  try{
+    const J=await jsPDFready();
+    const o=S.orders.find(x=>x.id===orderId); if(!o) return;
+    const c=S.customers.find(x=>x.id===o.custId)||{}, sp=S.sellers.find(x=>x.id===o.sellerId);
+    const no=invNoFor(o);
+    d=new J({unit:'mm',format:'a4'});
+    let y=pdfHead(d,'INVOICE',['Bill no: '+no,'Order: '+o.code,'Date: '+niceDate(o.date),
+      o.deliveryDate?('Expected delivery: '+niceDate(o.deliveryDate)):'']);
+
+    d.setFont('helvetica','bold'); d.setFontSize(9); d.setTextColor.apply(d,GRY); d.text('BILL TO',14,y);
+    d.setFontSize(11.5); d.setTextColor.apply(d,DRK); d.text(String(c.name||'-'),14,y+6);
+    d.setFont('helvetica','normal'); d.setFontSize(9.5); d.setTextColor.apply(d,GRY);
+    let ay=y+11.5;
+    [c.code?('Customer ID: '+c.code):'', c.mobile?('Mobile: '+c.mobile):'',
+     [o.address,o.city,o.pincode].filter(Boolean).join(', ')||c.address||''
+    ].filter(Boolean).forEach(l=>{ d.splitTextToSize(l,105).forEach(t=>{ d.text(t,14,ay); ay+=4.6; }); });
+    let ry=y+6;
+    d.text('Delivery: '+(o.shipMode||'Free home delivery'),196,ry,{align:'right'}); ry+=4.6;
+    if(sp){ d.text('Sold by: '+sp.name+' ('+sp.code+')',196,ry,{align:'right'}); ry+=4.6; }
+    y=Math.max(ay,ry)+5;
+
+    d.setFillColor(240,243,236); d.rect(14,y,182,8.5,'F');
+    d.setFont('helvetica','bold'); d.setFontSize(9); d.setTextColor.apply(d,DRK);
+    d.text('ITEM',17,y+5.8); d.text('QTY',124,y+5.8,{align:'right'});
+    d.text('PRICE',156,y+5.8,{align:'right'}); d.text('AMOUNT',193,y+5.8,{align:'right'});
+    y+=8.5;
+    d.setFont('helvetica','normal'); d.setFontSize(10);
+    o.items.forEach(i=>{
+      if(y>250){ d.addPage(); y=20; }
+      d.setTextColor.apply(d,DRK);
+      d.text(String(i.name).slice(0,44),17,y+5.8);
+      d.text(String(i.qty)+' '+(i.unit||''),124,y+5.8,{align:'right'});
+      d.text(rs(i.rate),156,y+5.8,{align:'right'});
+      d.text(rs(i.qty*i.rate),193,y+5.8,{align:'right'});
+      d.setDrawColor.apply(d,LINE_); d.setLineWidth(.3); d.line(14,y+8.5,196,y+8.5);
+      y+=8.5;
+    });
+
+    /* add up the SAME rounded figures the customer can see in the column */
+    const sub=o.items.reduce((a,i)=>a+Math.round(i.qty*i.rate),0);
+    const ship=Math.round(+o.shipFee||0);
+    const tot=sub+ship;
+    const stillDue=Math.round(orderDue(o));       /* oldest bill paid first */
+    const already=Math.max(0,tot-stillDue);
+    y+=7;
+    const line=(lab,v,bold,col)=>{ d.setFont('helvetica',bold?'bold':'normal'); d.setFontSize(bold?11.5:10);
+      d.setTextColor.apply(d,col||(bold?DRK:GRY)); d.text(lab,156,y,{align:'right'}); d.text(v,193,y,{align:'right'}); y+=6.2; };
+    line('Items total','Rs '+sub.toLocaleString('en-IN'));
+    if(ship) line('Shipping','Rs '+ship.toLocaleString('en-IN'));
+    d.setDrawColor(205,205,195); d.setLineWidth(.5); d.line(124,y-4.2,196,y-4.2);
+    line('TOTAL','Rs '+tot.toLocaleString('en-IN'),true);
+    if(already>0 && stillDue>0) line('Already received','Rs '+already.toLocaleString('en-IN'),false,GRN);
+    if(stillDue<=0) line('PAID IN FULL','',true,GRN);
+    else {
+      line('Please pay','Rs '+stillDue.toLocaleString('en-IN'),true,ORG);
+      const bal=Math.max(0,dues(o.custId));
+      if(bal && Math.abs(bal-stillDue)>1){ d.setFontSize(9); d.setTextColor.apply(d,GRY);
+        d.text('Total outstanding on your account: '+rs(bal),193,y,{align:'right'}); y+=6; }
+    }
+    if(S.farm.upi){ d.setFont('helvetica','normal'); d.setFontSize(9.5); d.setTextColor.apply(d,GRY);
+      d.text('Pay by UPI: '+S.farm.upi,14,y+2); }
+    pdfFoot(d);
+    await outPDF(d,(no+'-'+String(c.name||'bill').replace(/[^A-Za-z0-9]/g,'_')+'.pdf'),share);
+  }catch(e){ toast(e && e.message==='pdf-unavailable' ? 'Needs internet the first time' : 'Could not make the PDF'); }
+}
+
+async function receiptPDF(payId,share){
+  try{
+    const J=await jsPDFready();
+    const pm=S.payments.find(x=>x.id===payId); if(!pm) return;
+    const c=S.customers.find(x=>x.id===pm.custId)||{};
+    const no=rcpNoFor(pm);
+    const d=new J({unit:'mm',format:'a4'});
+    let y=pdfHead(d,'RECEIPT',['Receipt no: '+no,'Date: '+niceDate(pm.date)]);
+    d.setFont('helvetica','bold'); d.setFontSize(9); d.setTextColor.apply(d,GRY); d.text('RECEIVED FROM',14,y);
+    d.setFontSize(11.5); d.setTextColor.apply(d,DRK); d.text(String(c.name||'-'),14,y+6);
+    d.setFont('helvetica','normal'); d.setFontSize(9.5); d.setTextColor.apply(d,GRY);
+    d.text((c.code?('Customer ID: '+c.code):'')+(c.mobile?('   Mobile: '+c.mobile):''),14,y+11.5);
+    y+=22;
+    d.setFillColor(240,243,236); d.rect(14,y,182,20,'F');
+    d.setFont('helvetica','normal'); d.setFontSize(10); d.setTextColor.apply(d,GRY);
+    d.text('Amount received',20,y+8);
+    d.setFont('helvetica','bold'); d.setFontSize(18); d.setTextColor.apply(d,GRN);
+    d.text(rs(pm.amount),190,y+11,{align:'right'});
+    y+=28;
+    d.setFont('helvetica','normal'); d.setFontSize(10); d.setTextColor.apply(d,GRY);
+    d.text('Paid by: '+(pm.mode||'-'),14,y); y+=6.5;
+    d.text('Balance still to pay: '+rs(Math.max(0,dues(pm.custId))),14,y);
+    pdfFoot(d,true);
+    await outPDF(d,(no+'-'+String(c.name||'receipt').replace(/[^A-Za-z0-9]/g,'_')+'.pdf'),share);
+  }catch(e){ toast(e && e.message==='pdf-unavailable' ? 'Needs internet the first time' : 'Could not make the PDF'); }
+}
+
+/* Share straight to WhatsApp where the phone allows it, else save the file. */
+async function outPDF(d,filename,share){
+  const blob=d.output('blob');
+  if(share && navigator.canShare && navigator.share){
+    try{
+      const f=new File([blob],filename,{type:'application/pdf'});
+      if(navigator.canShare({files:[f]})){ await navigator.share({files:[f],title:filename}); return; }
+    }catch(e){ if(e && e.name==='AbortError') return; }
+  }
+  const dls=await getDL();
+  if(dls && dls.save){
+    try{ await dls.save({filename:filename,data:blob}); toast('Saved ✅'); }
+    catch(e){ toast('Saving not allowed here'); }
+    return;
+  }
+  try{ d.save(filename); toast('PDF ready ✅'); }catch(e){ toast('Could not save the PDF'); }
+}
+
+/* ═══════════════ 10b. EXPORT ═══════════════ */
+/* Saves the file. Opened as a normal HTML file → ordinary browser download.
+   Viewed on a hosted preview → asks the viewer through the host instead. */
+let DLNS=null, dlAsked=false;
+async function getDL(){ if(dlAsked) return DLNS; dlAsked=true;
+  try{ if(window.claude && window.claude.use) DLNS=await window.claude.use('downloads'); }catch(e){ DLNS=null; }
+  return DLNS; }
+async function dl(name,text,type){
+  const d=await getDL();
+  if(d && d.save){
+    try{ await d.save({filename:name,data:text}); toast('Saved ✅'); }
+    catch(e){ toast('Download not allowed here'); }
+    return;
+  }
+  try{
+    const b=new Blob([text],{type:type||'text/csv;charset=utf-8'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name;
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+    toast('Downloaded ✅');
+  }catch(e){ toast('Could not download here'); }
+}
+function csvRow(a){return a.map(v=>{v=v==null?'':String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(',');}
+function exportCSV(){
+  const L=[];
+  L.push('CUSTOMERS'); L.push(csvRow(['ID','Name','Mobile','Type','Address','Still to pay']));
+  S.customers.forEach(c=>L.push(csvRow([c.code,c.name,c.mobile,TYPES[c.code[0]],c.address,dues(c.id)])));
+  L.push(''); L.push('SALES PEOPLE'); L.push(csvRow(['ID','Name','Total sold']));
+  S.sellers.forEach(s=>L.push(csvRow([s.code,s.name,bySellerTotal(s.id)])));
+  L.push(''); L.push('ORDERS'); L.push(csvRow(['Order','Order date','Expected delivery','Cust ID','Customer','Mobile','Sold by','Item','Qty','Unit','Price','Amount','Delivery','Shipping','Pincode','City','Address','Status']));
+  S.orders.forEach(o=>{const c=S.customers.find(x=>x.id===o.custId)||{},s=S.sellers.find(x=>x.id===o.sellerId)||{};
+    o.items.forEach(i=>L.push(csvRow([o.code,o.date,o.deliveryDate||'',c.code,c.name,c.mobile,s.name||'',i.name,i.qty,i.unit,i.rate,R(i.qty*i.rate),o.shipMode||'',o.shipFee||0,o.pincode||'',o.city||'',o.address||'',o.status])));});
+  L.push(''); L.push('PAYMENTS'); L.push(csvRow(['Date','Cust ID','Customer','Amount','Mode']));
+  S.payments.forEach(p=>{const c=S.customers.find(x=>x.id===p.custId)||{};L.push(csvRow([p.date,c.code,c.name,p.amount,p.mode]));});
+  L.push(''); L.push('EXPENSES'); L.push(csvRow(['Date','Category','Amount','Mode','Note']));
+  S.expenses.forEach(e=>L.push(csvRow([e.date,e.cat,e.amount,e.mode,e.note])));
+  dl('farmbook-'+today()+'.csv',L.join('\n'));
+}
+function exportJSON(){ dl('farmbook-backup-'+today()+'.json',JSON.stringify(S,null,1),'application/json'); }
+
+/* ═══════════════ 11. BOOT ═══════════════ */
+document.querySelectorAll('#nav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
+$('fab').addEventListener('click',mOrder);
+seedIfNew();
+initSig();
+(function boot(n){ if(hasChart()||n>25) render(); else setTimeout(()=>boot(n+1),140); })(0);
+
+/* ---- keeping the three phones together ---- */
+if(S.sheetUrl) setTimeout(()=>syncNow(false),700);          /* on open */
+document.addEventListener('visibilitychange',()=>{           /* back to the front */
+  if(!document.hidden && S.sheetUrl && Date.now()-(lastSync||S.syncedAt||0)>25000) syncNow(false); });
+window.addEventListener('online',()=>{ if(S.sheetUrl) syncNow(false); });
+/* if something is still only on this phone, do not let the window close silently */
+window.addEventListener('beforeunload',e=>{
+  if(S.sheetUrl && countPending()>0){ e.preventDefault(); e.returnValue=''; return ''; }
+});
+
+/* ---- swipe down at the top of a screen to refresh ---- */
+(function pullToRefresh(){
+  const ind=document.createElement('div'); ind.className='ptr'; ind.textContent='↓ Pull to refresh';
+  document.body.appendChild(ind);
+  let y0=null, dy=0;
+  const atTop=()=>(window.scrollY||document.documentElement.scrollTop||0)<=2;
+  window.addEventListener('touchstart',e=>{
+    y0=(atTop() && !mask.classList.contains('open') && e.touches.length===1)?e.touches[0].clientY:null; dy=0;
+  },{passive:true});
+  window.addEventListener('touchmove',e=>{
+    if(y0==null) return;
+    dy=e.touches[0].clientY-y0;
+    if(dy>10){ ind.classList.add('on'); ind.style.transform='translate(-50%,'+Math.min(dy*0.4,34)+'px)';
+      ind.textContent=dy>70?'Release to refresh':'↓ Pull to refresh'; }
+  },{passive:true});
+  window.addEventListener('touchend',()=>{
+    const go=(y0!=null&&dy>70);
+    ind.classList.remove('on'); ind.style.transform=''; y0=null; dy=0;
+    if(go) syncNow(true);
+  });
+})();
+</script>
+</body>
+</html>
