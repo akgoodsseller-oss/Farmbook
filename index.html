@@ -643,57 +643,92 @@ async function postBlind(url,body,ms){
    phones syncing at once stay cheap - this asks for it right now */
 /* Tells you exactly which part of the chain is broken, in plain words. */
 async function mDiag(){
-  openSheet(head('Checking your Google Sheet','One moment')+`<div class="cs" id="dg">Testing…</div>`);
+  openSheet(head('Checking your Google Sheet','Running four tests')+`<div class="cs" id="dg">Testing…</div>`);
   const line=(ok,t)=>`<div class="row"><div class="av">${ok===null?'⏳':ok?'✅':'❌'}</div><div class="m"><b>${t}</b></div></div>`;
+  const put=h=>{ if($('dg')) $('dg').innerHTML=h; };
   let html='';
-  if(!S.sheetUrl){
-    html=line(false,'No Sheet link saved on this phone')+
-      `<div class="note">Paste your /exec link in Admin → Google Sheet.</div>`;
-    if($('dg')) $('dg').innerHTML=html; return;
+
+  /* 1 — is there a link at all, and does it look right? */
+  const url=(S.sheetUrl||'').trim();
+  if(!url){
+    put(line(false,'No Sheet link saved on this phone')
+      +`<div class="note">Paste your /exec link in Admin → Google Sheet.</div>`
+      +`<button class="b o w" style="margin-top:13px" onclick="shut();render()">Close</button>`);
+    return;
   }
-  html=line(true,'A Sheet link is saved');
+  const shape=/^https:\/\/script\.google\.com\/macros\/s\/[^\/]+\/exec$/.test(url);
+  html+=line(shape,shape?'The link looks right'
+    :'The link looks wrong — it must start https://script.google.com/macros/s/ and END in /exec');
+  if(!shape) html+=`<div class="warn">Yours is:<br><span style="font-family:ui-monospace;font-size:11.5px;word-break:break-all">${esc(url)}</span><br><br>
+    A <b>/dev</b> link only works for you while signed in. Use the <b>/exec</b> one from
+    Deploy → Manage deployments.</div>`;
+
+  /* 2 — how was the page opened? */
   html+=line(!asFile(), asFile()
     ? 'Opened as a downloaded file — many phones block these from using the internet'
-    : 'Opened from a proper web link');
+    : 'Opened from a web address ('+esc(location.origin)+')');
   html+=line(!!S.everSynced, S.everSynced
     ? 'This phone has reached the Sheet before'
     : 'This phone has NEVER reached the Sheet');
-  if($('dg')) $('dg').innerHTML=html+line(null,'Asking the Sheet to answer…');
+  put(html+line(null,'Asking the Sheet to answer…'));
 
-  let ans=null, err='';
-  try{ ans=await jsonp(S.sheetUrl+'?since=0',15000); }catch(e){ err=String(e.message||e); }
+  /* 3 — can this browser reach the Sheet at all, and what comes back? */
+  let reach=null, peek='', status='';
+  try{
+    const r=await fetch(url+'?since=0&probe=1',{method:'GET'});
+    status=r.status+' '+r.statusText;
+    const t=await r.text();
+    peek=t.slice(0,200);
+    reach=true;
+  }catch(e){
+    reach=false; peek=String(e&&e.message||e);
+  }
+  if(reach){
+    let j=null; try{ j=JSON.parse(peek.length<200?peek:''); }catch(e){}
+    html+=line(true,'The Sheet replied ('+esc(status)+')');
+    if(/<(!DOCTYPE|html)/i.test(peek) || /sign in|accounts\.google/i.test(peek)){
+      html+=line(false,'But it sent a Google SIGN-IN page, not your data');
+      html+=`<div class="warn"><b>This is the problem.</b> The deployment is not open to everyone.<br><br>
+        In the Sheet: Apps Script → <b>Deploy → Manage deployments</b> → pencil ✏️ →
+        set <b>Who has access</b> to <b>Anyone</b> → Deploy.<br><br>
+        "Anyone with Google account" is not enough — it must be <b>Anyone</b>.</div>`;
+    }
+  }else{
+    html+=line(false,'This browser could not reach the Sheet');
+    html+=`<div class="warn">Either this device has no internet, or something is blocking
+      script.google.com. The exact message was:<br>
+      <span style="font-family:ui-monospace;font-size:11.5px">${esc(peek)}</span></div>`;
+  }
 
-  if(!ans){
-    html+=line(false,'The Sheet did not answer — most likely the OLD connector');
-    html+=`<div class="note"><b>Two possible reasons.</b><br>
-      1. The Sheet still has the <b>old connector code</b> — most likely. Open the Sheet →
-         Extensions → Apps Script → paste the new <b>GoogleSheet_Connector.gs</b> over everything →
-         Save → <b>Deploy → Manage deployments → pencil → Version: New version → Deploy</b>.<br>
-      2. This phone has no internet right now.</div>`;
-    S.oldConn=true;
-  } else if(ans.v===undefined){
-    html+=line(true,'The Sheet answered');
-    html+=line(false,'But it is running the OLD connector');
-    html+=`<div class="note">Open the Sheet → Extensions → Apps Script → paste the new
-      <b>GoogleSheet_Connector.gs</b> over everything → Save →
-      <b>Deploy → Manage deployments → pencil → Version: New version → Deploy</b>.
-      Your /exec link does not change and no rows are lost.</div>`;
-    S.oldConn=true;
-  } else {
-    html+=line(true,'The Sheet answered, and the connector is up to date (v'+ans.v+')');
-    S.everSynced=true;
-    S.oldConn=false;
+  /* 4 — the real thing: the call the app actually uses */
+  let ans=null, jerr='';
+  try{ ans=await jsonp(url+'?since=0',15000); }catch(e){ jerr=String(e&&e.message||e); }
+
+  if(ans && ans.ok && ans.v!==undefined){
+    html+=line(true,'The app can read your Sheet, and the connector is up to date (v'+ans.v+')');
+    S.oldConn=false; S.everSynced=true;
     const n=countPending();
     html+=line(n===0,n===0?'Nothing is waiting to save':(n+' change'+(n>1?'s':'')+' still waiting'));
-    if(n) html+=`<div class="note">Tap <b>Send now</b> on the Home screen. If it stays stuck,
-      tell me and I will look further.</div>`;
-    else  html+=`<div class="note">Everything is in order. Last refreshed ${agoTxt(lastSync||S.syncedAt)}.</div>`;
-    html+=line(!ans.data.tabsWaiting, ans.data.tabsWaiting
-      ? 'The readable tabs are behind — tap "Update the Sheet\'s tabs now" in Admin'
-      : 'The readable tabs are up to date');
+    if(ans.data) html+=line(true,'Your Sheet holds '+((ans.data.customers||[]).length)+' customer(s), '
+      +((ans.data.orders||[]).length)+' order(s), '+((ans.data.products||[]).length)+' produce');
+    if(n) html+=`<div class="note">Everything is in order — tap <b>Send now</b> on the Home screen.</div>`;
+  } else if(ans && ans.v===undefined){
+    html+=line(false,'The Sheet answered, but with the OLD connector');
+    S.oldConn=true;
+    html+=`<div class="warn">Open the Sheet → Extensions → Apps Script → paste the new
+      <b>GoogleSheet_Connector.gs</b> over everything → Save →
+      <b>Deploy → Manage deployments → pencil → Version: New version → Deploy</b>.</div>`;
+  } else {
+    html+=line(false,'The app could not read your Sheet ('+esc(jerr||'no answer')+')');
+    html+=`<div class="warn">Most likely one of these, in order:<br>
+      1. <b>Who has access</b> is not set to <b>Anyone</b> — see above.<br>
+      2. The Sheet still has the <b>old connector</b>, which cannot answer back.<br>
+      3. The link is a <b>/dev</b> link instead of <b>/exec</b>.</div>`;
   }
-  html+=`<button class="b o w" style="margin-top:13px" onclick="shut();render()">Close</button>`;
-  if($('dg')) $('dg').innerHTML=html;
+
+  html+=`<div class="hint" style="margin-top:12px">Screenshot this whole screen if you need help — it says which step is failing.</div>
+    <button class="b o w" style="margin-top:11px" onclick="shut();render()">Close</button>`;
+  put(html);
   try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
 }
 
@@ -750,7 +785,7 @@ async function sync(loud,pull){
           /* the browser would not let us read the reply, or there is no signal.
              Only the first kind means we must use the slower two-step way. */
           if(S.oneTrip===true){ lastErr='no signal'; kind='net'; continue; }
-          S.oneTrip=false; res=null;
+          S.oneTrip=false; S.oneTripAt=Date.now(); res=null;
         }
         if(res){
           S.oneTrip=true;                     /* reading replies works on this phone */
@@ -794,7 +829,8 @@ async function sync(loud,pull){
       markClean(out.data,mark,dd);   /* only now is anything treated as saved */
       /* a working two-step sync means the signal is fine, so give the fast
          one-trip path another go next time rather than being stuck slow */
-      if(S.oneTrip===false && !S.oneTripTried) S.oneTrip=null;
+      if(S.oneTrip===false && !S.oneTripTried &&
+         Date.now()-(Number(S.oneTripAt)||0) > 864e5){ S.oneTrip=null; S.oneTripAt=Date.now(); }
       if(sendTomb){
         let all=true;
         const back=out.data.tomb||{};
@@ -888,7 +924,9 @@ function refreshBar(){
           It is showing an empty starter book — your real customers, order takers and prices are in
           the Sheet and have not come down.
           ${asFile()?'<br><br><b>Most likely reason:</b> this page was opened as a <b>downloaded file</b>. Many phones stop a downloaded file from using the internet. Opening it from a proper web link fixes it — ask whoever sent it for the link.':'<br><br>Check this phone has internet, then tap Try again.'}</div>
-        <button class="b o s" onclick="syncNow(true)">Try again</button></div>`;
+        <div class="br" style="margin-top:10px">
+          <button class="b o s" onclick="syncNow(true)">Try again</button>
+          <button class="b gh s" onclick="mDiag()">What is wrong?</button></div></div>`;
   }
   const p=pending;
 
