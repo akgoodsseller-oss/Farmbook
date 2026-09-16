@@ -35,6 +35,13 @@ header .t span{font-size:11.5px;color:var(--muted)}
 .sync{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:20px;background:var(--bg);color:var(--muted);flex:none}
 .sync.on{background:var(--green-l);color:var(--green)}
 
+#priv{position:sticky;top:59px;z-index:19;display:none;align-items:flex-start;gap:8px;
+  padding:9px 14px;font-size:12.5px;line-height:1.35;border-bottom:1px solid var(--line)}
+#priv.show{display:flex}
+#priv.soft{background:var(--orange-l);color:var(--orange-d)}
+#priv.loud{background:var(--red-l);color:var(--red)}
+#priv b{display:block;font-size:13.5px}
+#priv .x{flex:none;font-size:15px;line-height:1}
 main{padding:14px 14px 96px}
 .pt{font-size:23px;font-weight:600;margin:2px 2px 2px}
 .ps{color:var(--muted);font-size:13px;margin:0 2px 14px}
@@ -173,6 +180,7 @@ code.sn{display:block;background:#1e2119;color:#dfe6d8;padding:11px;border-radiu
     <div class="t"><b id="hName">FarmBook</b><span id="hDate"></span></div>
     <div class="sync" id="hSync" onclick="syncNow(true)" title="Refresh from the Sheet">Offline</div>
   </header>
+  <div id="priv"></div>
   <main id="main"></main>
   <button class="fab" id="fab" title="New order">＋</button>
   <nav id="nav">
@@ -732,8 +740,37 @@ async function mDiag(){
   try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
 }
 
+/* ── the readable tabs fill themselves ──
+   The Sheet rewrites its seven readable tabs at most once every 3 minutes,
+   because rewriting them is the slow part and doing it on every order would
+   burn the day's Google script time. That means the LAST order of a burst
+   can sit in the master copy with the tabs still showing the older picture.
+   So after any sync that actually sent something, we quietly ask the Sheet
+   to fill the tabs once the quiet period has passed. No toast, no redraw -
+   the person never has to press "Fill tabs" themselves. */
+let tabTimer=0;
+function tabsSoon(){
+  if(!S.sheetUrl) return;
+  clearTimeout(tabTimer);
+  tabTimer=setTimeout(quietTabs, 195000);          /* 3 min gap + a little slack */
+}
+async function quietTabs(){
+  if(!S.sheetUrl) return;
+  if(syncing || countPending()){ tabTimer=setTimeout(quietTabs,20000); return; }
+  try{
+    const r=await jsonp(S.sheetUrl+'?tabs=1&since='+(Number(S.since)||0),40000);
+    if(r&&r.ok){
+      if(r.data){ mergeDown(r.data); markClean(r.data,[],null); }
+      S.tabsWaiting=false; S.tabsAt=Date.now();
+      try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
+      render();
+    } else tabTimer=setTimeout(quietTabs,60000);
+  }catch(e){ tabTimer=setTimeout(quietTabs,60000); }   /* no signal - try again later */
+}
+
 async function tidySheet(){
   if(!S.sheetUrl){ toast('No Sheet linked yet'); return; }
+  clearTimeout(tabTimer);
   toast('Updating the Sheet…');
   try{
     const r=await jsonp(S.sheetUrl+'?tabs=1&since='+(Number(S.since)||0),40000);
@@ -754,7 +791,7 @@ async function sync(loud,pull){
   syncing=true; lastErr=''; setSync('working'); if(loud) render();
   const jit=()=>Math.floor(Math.random()*600);
   const waits=[0,700+jit(),1900+jit(),4200+jit(),8000+jit()];
-  let ok=false, kind='';
+  let ok=false, kind='', sentAny=false;
   try{
     for(let a=0; a<waits.length && !ok; a++){
       /* a busy Sheet is worth waiting out; no signal is not - say so quickly
@@ -776,6 +813,7 @@ async function sync(loud,pull){
          way and remembers, so it only pays that price once. */
       let out=null;
       const haveNews=(mark.length || dd.sentFarm || sendTomb);
+      if(haveNews) sentAny=true;
       const pkt=JSON.stringify({key:'farmbook',since:since,data:d});
 
       if(haveNews && S.oneTrip!==false){
@@ -841,6 +879,7 @@ async function sync(loud,pull){
     }
     lastSync=Date.now(); S.syncedAt=ok?lastSync:S.syncedAt;
     if(ok) S.everSynced=true;
+    if(ok && sentAny) tabsSoon();   /* let the tabs catch up by themselves */
     pending=countPending();
     try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
     setSync(ok?'ok':'fail');
@@ -943,7 +982,7 @@ function refreshBar(){
 
   if(S.tabsWaiting) return `<div class="rf" style="border-color:var(--green)">
       <div class="t"><b style="color:var(--green)">✓ All changes saved</b> — safe to close this window.
-        The Sheet's readable tabs are still catching up; they fill in within a few minutes.</div>
+        The Sheet's readable tabs are still catching up — they fill in by themselves in about 3 minutes. The button is only if you want them now.</div>
       <button class="b gh s" onclick="tidySheet()">Fill tabs</button></div>`;
 
   return `<div class="rf" style="border-color:var(--green)">
@@ -951,7 +990,43 @@ function refreshBar(){
         Last checked ${agoTxt(lastSync||S.syncedAt)}.</div>
       <button class="b g s" onclick="syncNow(true)">↻ Refresh</button></div>`;
 }
-function render(){ killCharts();
+/* ── private / incognito warning, on every page ──
+   In a Private or Incognito window the browser throws everything away when the
+   window closes - the farm's details, the order takers, the Admin PIN. That is
+   what kept wiping this farm's setup. The strip below sits under the header on
+   every screen: a quiet reminder normally, and a loud red one the moment we
+   have any reason to think this really is a private window. */
+let privLoud=false;
+function privPaint(){
+  const el=$('priv'); if(!el) return;
+  el.className='show '+(privLoud?'loud':'soft');
+  el.innerHTML = privLoud
+    ? `<span class="x">⚠️</span><span><b>This looks like a Private / Incognito window — do not use it.</b>
+         Everything you enter here is erased when the window closes: the farm's details, the order
+         takers, the prices, the Admin PIN. Close this window and open FarmBook in a normal one.</span>`
+    : `<span class="x">🔒</span><span><b>Do not open FarmBook in a Private / Incognito window.</b>
+         Whatever you enter there is wiped the moment the window closes. Always use a normal window.</span>`;
+}
+async function privCheck(){
+  let bad=false;
+  try{ localStorage.setItem('__fbt','1'); localStorage.removeItem('__fbt'); }
+  catch(e){ bad=true; }                       /* storage blocked outright */
+  if(!bad && navigator.storage && navigator.storage.estimate){
+    try{ const q=Number((await navigator.storage.estimate()).quota)||0;
+      if(q && q < 3e8) bad=true;              /* private windows get a tiny allowance */
+    }catch(e){}
+  }
+  if(!bad){
+    /* if this phone has been here before, the flag written last time survived */
+    try{
+      if(localStorage.getItem('fbSeen')) { /* fine */ }
+      else localStorage.setItem('fbSeen','1');
+    }catch(e){ bad=true; }
+  }
+  privLoud=bad; privPaint();
+}
+
+function render(){ killCharts(); privPaint();
   $('hName').textContent=S.farm.name||'FarmBook';
   $('hDate').textContent=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
   setSync(true);
@@ -1300,7 +1375,7 @@ function vSetup(){
         <button class="b g w" style="margin-top:11px" onclick="syncNow(true)">↻ Refresh now</button>
         <button class="b gh w" style="margin-top:9px" onclick="tidySheet()">Update the Sheet's tabs now</button>
         <div class="hint">The Sheet's readable tabs were last filled ${S.tabsAt?agoTxt(S.tabsAt):'not yet'}${S.tabsWaiting?' · <b style="color:var(--orange-d)">changes waiting to appear there</b>':''}.
-          Your data is in the Sheet the instant it saves — these tabs are just the tidy view of it.</div>
+          Your data is in the Sheet the instant it saves — these tabs are just the tidy view of it, and they refill on their own a few minutes after the last order.</div>
         <button class="b gh w" style="margin-top:9px" onclick="mDiag()">Check my Sheet connection</button>
         <div class="hint">Last refreshed ${agoTxt(lastSync||S.syncedAt)}${pending?' · <b style="color:var(--orange-d)">'+pending+' waiting to save</b>':''}.
           If two people change the same thing the later change wins, and anything you delete stays deleted everywhere.
@@ -2619,6 +2694,7 @@ $('fab').addEventListener('click',mOrder);
 seedIfNew();
 initSig();
 (function boot(n){ if(hasChart()||n>25) render(); else setTimeout(()=>boot(n+1),140); })(0);
+privPaint(); privCheck();
 
 /* ---- keeping the three phones together ---- */
 if(S.sheetUrl) setTimeout(()=>syncNow(false),700);          /* on open */
