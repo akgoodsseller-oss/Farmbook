@@ -41,7 +41,13 @@ header .t span{font-size:11.5px;color:var(--muted)}
 #priv.soft{background:var(--orange-l);color:var(--orange-d)}
 #priv.loud{background:var(--red-l);color:var(--red)}
 #priv b{display:block;font-size:13.5px}
-#priv .x{flex:none;font-size:15px;line-height:1}
+#priv .ico{flex:none;font-size:15px;line-height:1}
+#upd{position:sticky;top:59px;z-index:19;display:none;align-items:center;gap:10px;padding:9px 14px;
+  font-size:12.5px;line-height:1.35;background:var(--green-l);color:var(--green-d);border-bottom:1px solid var(--line)}
+#upd.show{display:flex}
+#upd b{color:var(--green)}
+#upd button{flex:none;border:0;border-radius:9px;background:var(--green);color:#fff;
+  font:600 12.5px/1 inherit;padding:9px 13px}
 main{padding:14px 14px 96px}
 .pt{font-size:23px;font-weight:600;margin:2px 2px 2px}
 .ps{color:var(--muted);font-size:13px;margin:0 2px 14px}
@@ -181,6 +187,7 @@ code.sn{display:block;background:#1e2119;color:#dfe6d8;padding:11px;border-radiu
     <div class="sync" id="hSync" onclick="syncNow(true)" title="Refresh from the Sheet">Offline</div>
   </header>
   <div id="priv"></div>
+  <div id="upd"></div>
   <main id="main"></main>
   <button class="fab" id="fab" title="New order">＋</button>
   <nav id="nav">
@@ -740,6 +747,8 @@ async function mDiag(){
   try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
 }
 
+const APP_BUILD='2026-09-16d';     /* shown in Admin, so you can tell which file a phone has */
+
 /* ── the readable tabs fill themselves ──
    The Sheet rewrites its seven readable tabs at most once every 3 minutes,
    because rewriting them is the slow part and doing it on every order would
@@ -753,6 +762,43 @@ function tabsSoon(){
   if(!S.sheetUrl) return;
   clearTimeout(tabTimer);
   tabTimer=setTimeout(quietTabs, 195000);          /* 3 min gap + a little slack */
+}
+/* ── picking up a new version by itself ──
+   The link never changes, so when a newer file is put up, phones have to
+   notice. Every time the app opens (and whenever it comes back to the front,
+   at most once an hour) it re-reads its own page straight from the web,
+   ignoring the phone's cache, and compares the build stamp. If it differs,
+   it says so and one tap loads the new one. Nothing is lost: anything not yet
+   saved is sent first. */
+let upFound='', upAt=0;
+async function checkUpdate(force){
+  if(!navigator.onLine) return;
+  if(!force && Date.now()-upAt < 3600000) return;
+  upAt=Date.now();
+  try{
+    const r=await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'});
+    if(!r.ok) return;
+    const t=await r.text();
+    const m=t.match(/APP_BUILD\s*=\s*'([^']+)'/);
+    if(m && m[1] && m[1]!==APP_BUILD){ upFound=m[1]; updatePaint(); }
+  }catch(e){}
+}
+async function takeUpdate(){
+  if(S.sheetUrl && countPending()>0){
+    toast('Saving your changes first…');
+    const ok=await sync(false,true);
+    if(!ok || countPending()>0){ toast('Not everything is saved yet — try again in a moment'); return; }
+  }
+  location.replace(location.pathname+'?v='+Date.now());
+}
+
+function tabsCatchUp(){
+  /* A phone sleeps the instant the screen locks, and a sleeping phone runs no
+     timers. So the moment the app is in front of us again, if the Sheet's tabs
+     are still behind and the quiet period has passed, fill them right away. */
+  if(!S.sheetUrl || !S.tabsWaiting) return;
+  if(Date.now()-(Number(S.tabsAt)||0) < 190000) return;
+  clearTimeout(tabTimer); quietTabs();
 }
 async function quietTabs(){
   if(!S.sheetUrl) return;
@@ -930,20 +976,48 @@ function last14(){return [...Array(14)].map((_,i)=>{const d=new Date();d.setDate
 
 /* ═══════════════ 8. VIEWS ═══════════════ */
 let adminOK=false;
-function mPin(){
-  openSheet(head('Admin is locked','Only the owner should change prices and people')+`
+/* ── who may change what ──
+   Taking orders, adding customers and recording payments is everyone's job.
+   Stock, prices, cost and the produce list are the owner's: those decide what
+   the farm is worth, so they sit behind the Admin code. With no code set, the
+   app is wide open and Admin says so. */
+const isAdmin=()=>!S.farm.pin || adminOK;
+let pinThen=null;
+function needAdmin(fn){
+  if(isAdmin()) return true;      /* already the owner - just carry on */
+  pinThen=fn;                     /* ask for the code, then do this again */
+  mPin(true); return false;
+}
+const lockIc=()=>isAdmin()?'':'🔒 ';
+
+function mPin(forAct){
+  openSheet(head(forAct?'Only the owner can change this':'Admin is locked',
+      forAct?'Stock, prices and produce are the owner\'s to change. Orders and customers are open to everyone.'
+            :'Only the owner should change prices and people')+`
     <label>4 digit code</label><input id="pinIn" type="password" inputmode="numeric" maxlength="8" placeholder="••••">
-    <button class="b o w" style="margin-top:14px" onclick="tryPin()">Open Admin</button>
-    <div class="hint">Forgot it? Clear this app's site data in the browser, or ask whoever set it.</div>`);
+    <button class="b o w" style="margin-top:14px" onclick="tryPin()">${forAct?'Unlock':'Open Admin'}</button>
+    <div class="hint">Forgot it? Ask whoever set up the farm. Everything else in the app keeps working without it.</div>`);
   setTimeout(()=>{ if($('pinIn')) $('pinIn').focus(); },80);
 }
-function tryPin(){ if(val('pinIn')===String(S.farm.pin)){ adminOK=true; shut(); go('setup'); }
-  else toast('Wrong code'); }
+function tryPin(){
+  if(val('pinIn')!==String(S.farm.pin)){ toast('Wrong code'); return; }
+  adminOK=true; shut();
+  if(pinThen){ const f=pinThen; pinThen=null; setTimeout(f,60); render(); }
+  else go('setup');
+}
 function go(v){
   if(v==='setup' && S.farm.pin && !adminOK){ mPin(); return; }
   V=v; document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   window.scrollTo(0,0); render(); }
 /* the refresh strip that sits at the top of every screen */
+function updatePaint(){
+  const el=$('upd'); if(!el) return;
+  if(!upFound){ el.className=''; el.innerHTML=''; return; }
+  el.className='show';
+  el.innerHTML=`<span><b>A newer FarmBook is ready.</b> This phone has build ${APP_BUILD};
+      ${upFound} is now up. Your saved work is not affected.</span>
+    <button onclick="takeUpdate()">Update</button>`;
+}
 function refreshBar(){
   if(!S.sheetUrl) return `<div class="rf"><div class="t"><b>Saved on this phone only</b>
       No Google Sheet linked yet — link one in Admin to share with the others.</div></div>`;
@@ -1001,10 +1075,10 @@ function privPaint(){
   const el=$('priv'); if(!el) return;
   el.className='show '+(privLoud?'loud':'soft');
   el.innerHTML = privLoud
-    ? `<span class="x">⚠️</span><span><b>This looks like a Private / Incognito window — do not use it.</b>
+    ? `<span class="ico">⚠️</span><span><b>This looks like a Private / Incognito window — do not use it.</b>
          Everything you enter here is erased when the window closes: the farm's details, the order
          takers, the prices, the Admin PIN. Close this window and open FarmBook in a normal one.</span>`
-    : `<span class="x">🔒</span><span><b>Do not open FarmBook in a Private / Incognito window.</b>
+    : `<span class="ico">🔒</span><span><b>Do not open FarmBook in a Private / Incognito window.</b>
          Whatever you enter there is wiped the moment the window closes. Always use a normal window.</span>`;
 }
 async function privCheck(){
@@ -1026,7 +1100,7 @@ async function privCheck(){
   privLoud=bad; privPaint();
 }
 
-function render(){ killCharts(); privPaint();
+function render(){ killCharts(); privPaint(); updatePaint();
   $('hName').textContent=S.farm.name||'FarmBook';
   $('hDate').textContent=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
   setSync(true);
@@ -1067,9 +1141,9 @@ function vStock(){
           <tr><td><b>Free to sell</b></td><td class="r"><b style="color:${r.free<0?'var(--red)':'var(--ink)'}">${r.free} ${esc(r.p.unit)}</b></td></tr>
         </table>
         <div class="br" style="margin-top:10px">
-          <button class="b g s" onclick="mStock('${r.p.id}','in')">＋ Add stock</button>
-          <button class="b gh s" onclick="mStock('${r.p.id}','out')">− Wastage</button>
-          <button class="b gh s" onclick="mStock('${r.p.id}','set')">✎ Correct count</button>
+          <button class="b g s" onclick="mStock('${r.p.id}','in')">${lockIc()}＋ Add stock</button>
+          <button class="b gh s" onclick="mStock('${r.p.id}','out')">${lockIc()}− Wastage</button>
+          <button class="b gh s" onclick="mStock('${r.p.id}','set')">${lockIc()}✎ Correct count</button>
         </div>
       </div>`).join('')
       :`<div class="empty"><div class="em">🌾</div><h3>No produce yet</h3>
@@ -1082,6 +1156,9 @@ function vStock(){
         <td class="r" style="color:${g.qty<0?'var(--red)':'var(--green)'}">${g.qty>0?'+':''}${g.qty} ${esc(g.unit||'')}</td>
         <td>${esc(g.why||g.kind||'')}</td><td>${esc(nameOf(g.byId)||g.who||'—')}</td></tr>`).join('')}
       </table></div></div>`:''}
+
+    ${isAdmin()?'':`<div class="note" style="margin-top:12px">🔒 <b>Only the owner can change stock.</b>
+      Anyone can look at this page and take orders; adding stock, wastage and corrections ask for the Admin code.</div>`}
 
     <div class="hint" style="margin-top:12px">Free to sell = everything brought in, minus what has been delivered,
       minus what is promised on orders not yet delivered. Cancel an order and its stock comes straight back.</div>`;
@@ -1374,6 +1451,8 @@ function vSetup(){
           open the app, swipe down, or tap <b>↻ Refresh</b>. Their orders come back to you the same way.</div>
         <button class="b g w" style="margin-top:11px" onclick="syncNow(true)">↻ Refresh now</button>
         <button class="b gh w" style="margin-top:9px" onclick="tidySheet()">Update the Sheet's tabs now</button>
+        <div class="hint" style="margin-top:6px">This phone is running app build <b>${APP_BUILD}</b>.
+          If another phone shows an older build, it is still on the old file — open the link again and pull down to refresh.</div>
         <div class="hint">The Sheet's readable tabs were last filled ${S.tabsAt?agoTxt(S.tabsAt):'not yet'}${S.tabsWaiting?' · <b style="color:var(--orange-d)">changes waiting to appear there</b>':''}.
           Your data is in the Sheet the instant it saves — these tabs are just the tidy view of it, and they refill on their own a few minutes after the last order.</div>
         <button class="b gh w" style="margin-top:9px" onclick="mDiag()">Check my Sheet connection</button>
@@ -1526,6 +1605,7 @@ function delSeller(id){
 const UNIT_LIST=['kg','gram','piece','dozen','box','crate','bundle','packet'];
 let P=null;
 function mProduct(id){
+  if(!needAdmin(()=>mProduct(id))) return;
   const p=(id&&id!==true)?S.products.find(x=>x.id===id):null;
   P={id:p?p.id:'', thenOrder:(id===true), name:p?p.name:'', unit:p?p.unit:'kg',
      cost:p?(p.cost||0):0, stock:p?(p.stock||0):0, low:p?(p.low==null?10:p.low):10,
@@ -1568,6 +1648,7 @@ function drawProduct(){
     ${editing?`<button class="b gh w" style="margin-top:9px;color:var(--red)" onclick="delProduct('${P.id}')">Remove this produce</button>`:''}`);
 }
 function saveProduct(){
+  if(!isAdmin()){ toast('Only the owner can change produce and prices'); return; }
   keepP();
   if(!P.name){toast('Enter a name');return;}
   let prices=P.prices.filter(x=>String(x.label).trim()!=='').map(x=>({label:String(x.label).trim(),amt:R(x.amt)}));
@@ -1581,12 +1662,14 @@ function saveProduct(){
   if(again){ mOrder(); } else { shut(); render(); }
 }
 function delProduct(id){
+  if(!isAdmin()){ toast('Only the owner can remove produce'); return; }
   if(S.orders.some(o=>o.items.some(i=>i.pid===id))){ toast('It is used in orders — cannot remove'); return; }
   if(!confirm('Remove this produce?')) return;
   killRec(id); S.products=S.products.filter(x=>x.id!==id); P=null; save(); shut(); toast('Removed'); render();
 }
 
 function undoStock(lid){
+  if(!needAdmin(()=>undoStock(lid))) return;
   const g=S.stockLogs.find(x=>x.id===lid); if(!g) return;
   if(!confirm('Undo this stock entry? '+(g.qty>0?'+':'')+g.qty+' '+(g.unit||'')+' of '+g.name)) return;
   const p=S.products.find(x=>x.id===g.pid);
@@ -1600,6 +1683,7 @@ const STOCK_WHY={in:['Own harvest','Bought from another farm','Opening stock','O
                  out:['Wastage / spoiled','Given free / sample','Own use','Other'],
                  set:['Counted the godown','Correcting a mistake','Other']};
 function mStock(pid,mode){
+  if(!needAdmin(()=>mStock(pid,mode))) return;
   const p=S.products.find(x=>x.id===pid), left=stockLeft(pid);
   const t={in:'Add stock',out:'Take stock out',set:'Correct the stock'}[mode];
   openSheet(head(t, esc(p.name)+' · '+left+' '+esc(p.unit)+' left now')+`
@@ -1611,6 +1695,7 @@ function mStock(pid,mode){
     <button class="b o w" style="margin-top:14px" onclick="saveStock('${pid}','${mode}')">Save</button>`);
 }
 function saveStock(pid,mode){
+  if(!isAdmin()){ toast('Only the owner can change stock'); return; }
   const p=S.products.find(x=>x.id===pid), q=nval('stQ');
   if(!val('stBy')){toast('Pick who is recording this');return;}
   if(!once('stock|'+pid+'|'+mode+'|'+q)){ shut(); return; }
@@ -2698,9 +2783,14 @@ privPaint(); privCheck();
 
 /* ---- keeping the three phones together ---- */
 if(S.sheetUrl) setTimeout(()=>syncNow(false),700);          /* on open */
+setTimeout(tabsCatchUp,2600);                               /* and tidy the tabs if they are behind */
+setTimeout(()=>checkUpdate(true),3500);                     /* is a newer version up? */
 document.addEventListener('visibilitychange',()=>{           /* back to the front */
-  if(!document.hidden && S.sheetUrl && Date.now()-(lastSync||S.syncedAt||0)>25000) syncNow(false); });
-window.addEventListener('online',()=>{ if(S.sheetUrl) syncNow(false); });
+  if(document.hidden) return;
+  if(S.sheetUrl && Date.now()-(lastSync||S.syncedAt||0)>25000) syncNow(false);
+  tabsCatchUp(); checkUpdate(false); });
+window.addEventListener('online',()=>{ if(S.sheetUrl){ syncNow(false); tabsCatchUp(); } });
+window.addEventListener('pageshow',()=>tabsCatchUp());   /* restored from the phone's back-forward cache */
 /* if something is still only on this phone, do not let the window close silently */
 window.addEventListener('beforeunload',e=>{
   if(S.sheetUrl && countPending()>0){ e.preventDefault(); e.returnValue=''; return ''; }
